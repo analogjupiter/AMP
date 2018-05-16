@@ -1,0 +1,14 @@
+{
+    "name": "amp",
+    "description": "API Markup Processor",
+
+    "copyright": "Copyright © 2018  0xEAB",
+    "license": "AGPL-3.0",
+
+    "authors": [
+        "Manuel Kirchner (R3Vid)",
+        "Elias Batek (0xEAB)"
+    ],
+
+    "targetPath": "bin"
+}
