@@ -123,7 +123,7 @@ ParserResult parseBlueprint(string filePath)
     auto r = ParserResult();
     r.filePath = filePath;
 
-    ProcessPipes pipes = pipeProcess(["drafter", "-f=json"], Redirect.all);
+    ProcessPipes pipes = pipeProcess(["drafter", "-f json"], Redirect.all, null, Config.suppressConsole);
     pipes.stdin.writeln(read(filePath));
     pipes.stdin.flush();
     pipes.stdin.close();
