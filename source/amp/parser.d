@@ -18,8 +18,10 @@
  +/
 module amp.parser;
 
-import std.stdio : File;
-import std.string;
+import std.conv : to;
+import std.file : read;
+import std.json;
+import std.process;
 
 /++
     Parsed blueprint
@@ -40,12 +42,21 @@ ParserResult parseBlueprint(string filePath)
     auto r = ParserResult();
     r.filePath = filePath;
 
-    auto f = File(filePath, "r");
+    ProcessPipes pipes = pipeProcess(["drafter", "-f=json"], Redirect.all);
+    pipes.stdin.writeln(read(filePath));
+    pipes.stdin.flush();
+    pipes.stdin.close();
+    wait(pipes.pid);
 
-    string line;
-    while((line = f.readln()) !is null)
-    {
-        line = line.strip;
-    }
+    ulong jsonTextLength = pipes.stdout.size;
+    char[] jsonText = new char[jsonTextLength.to!size_t];
+    jsonText = pipes.stdout.rawRead(jsonText);
+
+    ulong errorTextLength = pipes.stderr.size();
+    char[] errorText = new char[errorTextLength.to!size_t];
+    errorText = pipes.stderr.rawRead(errorText);
+
+    JSONValue json = parseJSON(jsonText);
+
     return r;
 }
