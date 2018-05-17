@@ -99,8 +99,8 @@ struct Resource
     string url;
     string description;
 
-    Action[] actions;
-    Attribute[] attributes;
+    Action[] actions;       // = HTTP Methods
+    Attribute[] attributes;     // = data type definitions
 }
 
 struct Group
@@ -140,20 +140,18 @@ ParserResult parseBlueprint(string filePath)
     auto r = ParserResult();
     r.filePath = filePath;
 
-    ProcessPipes pipes = pipeProcess(["drafter", "-f json"], Redirect.all, null, Config.suppressConsole);
-    pipes.stdin.writeln(read(filePath));
-    pipes.stdin.flush();
-    pipes.stdin.close();
-    wait(pipes.pid);
-
+    ProcessPipes pipes = pipeProcess(["drafter", "-f",  "json", filePath], Redirect.all);
+    scope(exit) wait(pipes.pid);
+    //string[] output;
+    //foreach (line; pipes.stdout.byLine) output ~= line.idup;
 
     //TODO implement dynamic buffer size
     char[] jsonText = new char[1000000];
     jsonText = pipes.stdout.rawRead(jsonText);
-
+    writeln(jsonText);
     char[] errorText = new char[1000000];
     errorText = pipes.stderr.rawRead(errorText);
-    writeln(jsonText);
+
     JSONValue json = parseJSON(jsonText);
 
     auto api = parseRoot(json);
