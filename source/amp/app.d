@@ -35,11 +35,13 @@
  +/
 module amp.app;
 
-import std.file : exists, isDir;
+import std.file : exists, isDir, mkdirRecurse, thisExePath;
 import std.getopt;
+import std.path : buildPath, dirName;
 import std.stdio;
 
 import amp.parser;
+import amp.output.html;
 
 /++
     Launches AMP in command-line mode
@@ -47,17 +49,22 @@ import amp.parser;
 int runCLI(string[] args)
 {
     bool optPrintVersionInfo;
+    string optOutputDirectory;
+    string optTemplateDirectory;
 
+    // dfmt off
     GetoptResult rgetopt = getopt(
         args,
         config.passThrough,
-        "version|w", "Display the version of this program", &optPrintVersionInfo
+        "templates|t", "Specifiy a custom template directory.", &optTemplateDirectory,
+        "version|w", "Display the version of this program.", &optPrintVersionInfo
     );
+    // dfmt on
 
     if (rgetopt.helpWanted)
     {
         defaultGetoptPrinter(import("appname.txt") ~ "\n\n  Usage:\n    " ~ args[0] ~
-            " [options] [blueprint path]\n\n\nAvailable options:\n==================", rgetopt.options);
+            " [options] [blueprint path] [output directory]\n\n\nAvailable options:\n==================", rgetopt.options);
         return 0;
     }
     else if (optPrintVersionInfo)
@@ -74,13 +81,38 @@ int runCLI(string[] args)
         return 1;
     }
 
-    string path = args[$-1];
+    // Output directory specified?
+    if (args.length < 3)
+    {
+        // no
+        stderr.writeln("Error: No output directory specified");
+        return 1;
+    }
+
+    string path = args[$-2];
+    string output = args[$-1];
 
     // Verify path
     if (!exists(path))
     {
         stderr.writeln("Error: Non-existant blueprint path (" ~ path ~ ")");
         return 1;
+    }
+
+    // Check output directory
+    if (!exists(output))
+    {
+        mkdirRecurse(output);
+    }
+    else if (!isDir(output))
+    {
+        stderr.writeln("Error: The specified output directory is not a directory (" ~ output ~ ")");
+        return 1;
+    }
+
+    if (optTemplateDirectory is null)
+    {
+        optTemplateDirectory = buildPath(dirName(thisExePath), "factory-templates");
     }
 
     // Determine path type (dir or file)
@@ -93,6 +125,9 @@ int runCLI(string[] args)
     {
         // File
         ParserResult r = parseBlueprint(path);
+
+        auto html = new HTMLAPIDocsOutput(optTemplateDirectory);
+        html.write(r, output);
     }
 
     return 0;
