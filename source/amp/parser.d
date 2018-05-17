@@ -18,10 +18,13 @@
  +/
 module amp.parser;
 
+import amp.jsontreeprocessor;
+
 import std.conv : to;
 import std.file : read;
 import std.json;
 import std.process;
+import std.stdio;
 
 
 enum HTTPMethod{
@@ -108,6 +111,8 @@ struct ParserResult
         Path to the parsed file
      +/
     string filePath;
+
+    APIRoot api;
 }
 
 /++
@@ -124,15 +129,17 @@ ParserResult parseBlueprint(string filePath)
     pipes.stdin.close();
     wait(pipes.pid);
 
-    ulong jsonTextLength = pipes.stdout.size;
-    char[] jsonText = new char[jsonTextLength.to!size_t];
+
+    //TODO implement dynamic buffer size
+    char[] jsonText = new char[1000000];
     jsonText = pipes.stdout.rawRead(jsonText);
 
-    ulong errorTextLength = pipes.stderr.size();
-    char[] errorText = new char[errorTextLength.to!size_t];
+    char[] errorText = new char[1000000];
     errorText = pipes.stderr.rawRead(errorText);
-
+    writeln(jsonText);
     JSONValue json = parseJSON(jsonText);
 
+    auto api = parseRoot(json);
+    writeln(api.to!(string));
     return r;
 }
