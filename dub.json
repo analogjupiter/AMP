@@ -10,5 +10,9 @@
         "Elias Batek (0xEAB)"
     ],
 
+    "stringImportPaths": [
+        "source/amp/str"
+    ],
+
     "targetPath": "bin"
 }
