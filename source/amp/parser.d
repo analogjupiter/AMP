@@ -123,21 +123,20 @@ ParserResult parseBlueprint(string filePath)
     auto r = ParserResult();
     r.filePath = filePath;
 
-    ProcessPipes pipes = pipeProcess(["drafter", "-f",  "json", filePath], Redirect.all);
+    ProcessPipes pipes = pipeProcess(["drafter", "-f",  "json", filePath], Redirect.stdout | Redirect.stderr);
     scope(exit) wait(pipes.pid);
-    //string[] output;
-    //foreach (line; pipes.stdout.byLine) output ~= line.idup;
 
     //TODO implement dynamic buffer size
     char[] jsonText = new char[1000000];
     jsonText = pipes.stdout.rawRead(jsonText);
-    writeln(jsonText);
+
     char[] errorText = new char[1000000];
     errorText = pipes.stderr.rawRead(errorText);
 
     JSONValue json = parseJSON(jsonText);
+    auto api = parse(json);
 
-    auto api = parseRoot(json);
     writeln(api.to!(string));
+
     return r;
 }
