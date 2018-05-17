@@ -32,6 +32,13 @@ enum HTTPMethod{
     DELETE
 }
 
+struct Attribute
+{
+    string name;
+    string dataType;
+    string description;
+}
+
 struct GetParameter
 {
     string name;
@@ -43,14 +50,14 @@ struct GetParameter
 struct Request
 {
     string jsonExample;
-
-    GetParameter[] getParameters;
+    string description;
 }
 
 struct Response
 {
     string jsonExample;
     string description;
+
     int httpStatusCode;
 }
 
@@ -62,6 +69,8 @@ struct Action
 
     Request[] requests;
     Response[] responses;
+    GetParameter[] getParameters;
+    Attribute[] attributes;
 }
 
 struct Resource
@@ -71,6 +80,7 @@ struct Resource
     string description;
 
     Action[] actions;
+    Attribute[] attributes;
 }
 
 struct Group
