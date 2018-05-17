@@ -23,6 +23,72 @@ import std.file : read;
 import std.json;
 import std.process;
 
+
+enum HTTPMethod{
+    GET,
+    POST,
+    PATCH,
+    PUT,
+    DELETE
+}
+
+struct GetParameter
+{
+    string name;
+    string dataType;
+    string description;
+    bool isRequired;
+}
+
+struct Request
+{
+    string jsonExample;
+
+    GetParameter[] getParameters;
+}
+
+struct Response
+{
+    string jsonExample;
+    string description;
+    int httpStatusCode;
+}
+
+struct Action
+{
+    string title;
+    string description;
+    HTTPMethod httpMethod;
+
+    Request[] requests;
+    Response[] responses;
+}
+
+struct Resource
+{
+    string title;
+    string url;
+    string description;
+
+    Action[] actions;
+}
+
+struct Group
+{
+    string title;
+    string description;
+
+    Resource[] resources;
+}
+
+struct APIRoot
+{
+    string title;
+    string description;
+
+    Group[] groups;
+}
+
 /++
     Parsed blueprint
  +/
