@@ -36,6 +36,7 @@
 module amp.parser;
 
 import amp.jsontreeprocessor;
+import amp.apiwrappers;
 
 import std.conv : to;
 import std.file : read;
@@ -43,81 +44,6 @@ import std.json;
 import std.process;
 import std.stdio;
 
-
-enum HTTPMethod{
-    GET,
-    POST,
-    PATCH,
-    PUT,
-    DELETE
-}
-
-struct Attribute
-{
-    string name;
-    string dataType;
-    string description;
-}
-
-struct GetParameter
-{
-    string name;
-    string dataType;
-    string description;
-    bool isRequired;
-}
-
-struct Request
-{
-    string jsonExample;
-    string description;
-}
-
-struct Response
-{
-    string jsonExample;
-    string description;
-
-    int httpStatusCode;
-}
-
-struct Action
-{
-    string title;
-    string description;
-    HTTPMethod httpMethod;
-
-    Request[] requests;
-    Response[] responses;
-    GetParameter[] getParameters;
-    Attribute[] attributes;
-}
-
-struct Resource
-{
-    string title;
-    string url;
-    string description;
-
-    Action[] actions;       // = HTTP Methods
-    Attribute[] attributes;     // = data type definitions
-}
-
-struct Group
-{
-    string title;
-    string description;
-
-    Resource[] resources;
-}
-
-struct APIRoot
-{
-    string title;
-    string description;
-
-    Group[] groups;
-}
 
 /++
     Parsed blueprint
@@ -157,4 +83,3 @@ ParserResult parseBlueprint(string filePath)
 
     return r;
 }
-
