@@ -15,134 +15,122 @@
 
     You should have received a copy of the GNU Affero General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
-
-    Linking this tool statically or dynamically with other modules is
-    making a combined work based on this tool.  Thus, the terms and
-    conditions of the GNU Affero General Public License cover the whole
-    combination.
-
-    As a special exception, the copyright holders of this tool give you
-    permission to link this tool with independent modules to produce an
-    executable, regardless of the license terms of these independent
-    modules, and to copy and distribute the resulting executable under
-    terms of your choice, provided that you also meet, for each linked
-    independent module, the terms and conditions of the license of that
-    module.  An independent module is a module which is not derived from
-    or based on this tool.  If you modify this tool, you may extend
-    this exception to your version of the tool, but you are not
-    obligated to do so.  If you do not wish to do so, delete this
-    exception statement from your version.
  +/
 module amp.jsontreeprocessor;
+
+import amp.parser;
+import amp.apielement;
+import amp.apiwrappers;
+
 import std.stdio;
 import std.json;
-import amp.parser;
 
-enum ElementTypes{
-    Group = "category",
-    ResourceGroup = "resourceGroup",
-    Description = "description"
+
+Attribute[] getAttributes(JSONValue jsonTree)
+{
+    Attribute[] a;
+    return a;
 }
 
 /++
-    Abstraction of a JSONValue representing an Element from the parse result
+    Gets the
 +/
-class APIElement
+Request getRequest(JSONValue json)
 {
-    JSONValue jsonElement;
+    return Request();
+}
+/++
+    Returns all actions (HTTP methods) on the current json level
++/
+Action[] getActions(JSONValue jsonTree)
+{
+    auto apiTree = new APIElement(jsonTree);
+    Action[] actions;
 
-    this(JSONValue jsonElement)
+    foreach(APIElement actionElement; apiTree.getChildrenByElementType(ElementTypes.Action))
     {
-        this.jsonElement = jsonElement;
-    }
+        auto title = actionElement.title;
+        auto description = actionElement.description;
 
-    public:
+        APIElement transaction = new APIElement(actionElement.content);
+        transaction = transaction.findFirstElement(ElementTypes.Transaction); //new APIElement(actionElement.content[0]);  // TODO implement support for multiple transactions within an Action / transition
 
-    /++
-        Properties return the specified element, or an empty string if the element wasn't found.
-    +/
-    @property
-    {
-        /++
-            Location: content
-        +/
-        JSONValue content()
+        //TODO check element type
+        if(transaction)
         {
-            return this.jsonElement["content"];
-        }
+            APIElement transactionItems = new APIElement(transaction.content);
+            APIElement requestElement = transactionItems.findFirstElement(ElementTypes.Request);
 
+            // NOTE this technically belongs to the Request, not to the Action
 
-        /++
-            Location: meta -> title -> content
-        +/
-        string title()
-        {
-            try
-            {
-                return this.jsonElement["meta"]["title"]["content"].str;
-            }
-            catch(JSONException ex)
-            {
-                return "";
-            }
-        }
-
-        /++
-            Location: content -> element of type "copy" -> content
-        +/
-        string description()
-        {
-            try
-            {
-                /++ TODO search all elements instead of just taking the first one +/
-                if(this.content[0]["element"].str != "copy")
-                    writeln("The description could not be found!!");
-                return this.content[0]["content"].str;
-            }
-            catch(JSONException ex)
-            {
-                return "";
-            }
+            auto httpMethod = requestElement.getElementOrEmptyString(["attributes", "method"]);
+            writeln(httpMethod);
         }
 
 
     }
 
-    bool isElementType(string type) const
-    {
-        return this.jsonElement["element"].str == type;
-    }
+    return actions;
 }
 
-APIRoot parse(JSONValue jsonTree)
+Resource[] getResources(JSONValue jsonTree)
 {
-    auto api = parseRoot(jsonTree["content"][0]);
-    api.groups = getGroups(jsonTree["content"]["content"]);
+    Resource[] resources;
 
-    return api;
+    foreach(JSONValue json; jsonTree.array)
+    {
+        auto apiElement = new APIElement(json);
+
+        if(apiElement.isElementType(ElementTypes.Resource))
+        {
+            auto title = apiElement.title;
+            auto url = json["attributes"]["href"]["content"].str;
+            auto description = apiElement.description;
+
+            auto resource = Resource(title, url, description);
+
+            resource.attributes = getAttributes(apiElement.content);
+            resource.actions = getActions(apiElement.content);
+
+            resources ~= resource;
+        }
+    }
+
+    return resources;
 }
 
+/++
+    Returns all groups found within the first level of the jsonTree
++/
 Group[] getGroups(JSONValue jsonTree)
 {
     Group[] groups;
+
     /++
         Iterate over all potential Resource groups (= content of an API)
         parse and add all resource groups to the api root
     +/
-    foreach(JSONValue val; jsonTree["content"]["content"].array)
+    foreach(JSONValue json; jsonTree.array)
     {
-        auto apiElement = new APIElement(val);
+        auto apiElement = new APIElement(json);
+
         if(apiElement.isElementType(ElementTypes.Group) &&
-            val["meta"]["classes"]["content"]["content"].str == ElementTypes.ResourceGroup)
+            json["meta"]["classes"]["content"][0]["content"].str == ElementTypes.ResourceGroup)
         {
-            groups ~= Group(apiElement.title, apiElement.description);
+            auto group = Group(apiElement.title, apiElement.description);
+            group.resources = getResources(apiElement.content);
+
+            groups ~= group;
         }
     }
 
     return groups;
 }
 
-
+/++
+    Converts the first (root) Element into an APIRoot
+    TODO implement functionality to handle mutliple "APIRoots"
++/
 APIRoot parseRoot(JSONValue element)
 {
     if(element["element"].str != "category")
@@ -162,3 +150,16 @@ APIRoot parseRoot(JSONValue element)
     return APIRoot(title,description);
 }
 
+/++
+    Converts the provided JSON into an APIRoot object
++/
+APIRoot parse(JSONValue jsonTree)
+{
+    JSONValue firstElement = jsonTree["content"][0];
+
+    auto api = parseRoot(firstElement);
+
+    api.groups = getGroups(firstElement["content"]);
+
+    return api;
+}
