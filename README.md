@@ -13,5 +13,5 @@ It aims to be partially compatible with [API Blueprint](https://apiblueprint.org
 - [Mustache-D](https://github.com/repeatedly/mustache-d)
     - (c) Masahiro Nakagawa
     - License: BSL-1.0
-    - Required for generating HTML files.
+    - Used for generating HTML files.
 
