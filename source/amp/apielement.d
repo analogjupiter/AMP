@@ -28,7 +28,8 @@ enum ElementTypes{
     Description = "description",
     Transaction = "httpTransaction",
     Request = "httpRequest",
-    Response = "httpResponse"
+    Response = "httpResponse",
+    Asset = "asset"         // Part of a Request or Response containing the message body
 }
 
 /++

@@ -24,7 +24,7 @@ import amp.apiwrappers;
 
 import std.stdio;
 import std.json;
-
+import std.conv : to;
 
 Attribute[] getAttributes(JSONValue jsonTree)
 {
@@ -32,15 +32,83 @@ Attribute[] getAttributes(JSONValue jsonTree)
     return a;
 }
 
+
 /++
-    Gets the
+    Returns all Responses on the current json level
+    Expects the content of a transaction as input
 +/
-Request getRequest(JSONValue json)
+Response[] getResponses(JSONValue json)
 {
-    return Request();
+    auto api = new APIElement(json);
+    Response[] responses;
+
+    foreach(APIElement responseElement; api.getChildrenByElementType(ElementTypes.Response))
+    {
+        string jsonExample = "";
+        string description = "";
+
+        auto foo = new APIElement(responseElement.content);
+
+        APIElement responseAsset = foo.findFirstElement(ElementTypes.Asset);
+        if(responseAsset)
+            jsonExample = responseAsset.content.str;
+
+
+        APIElement responseDescription = foo.findFirstElement(ElementTypes.Description);
+
+        if(responseDescription)
+            description = responseDescription.content.str;
+
+        string statusCodeStr = responseElement.getElementOrEmptyString(["attributes", "statusCode", "content"]);
+        int status = 0;
+        if(statusCodeStr != "")
+            status = to!int(statusCodeStr);
+
+        Response response = Response(jsonExample, description, status);
+
+        responses ~= response;
+    }
+
+    return responses;
 }
+
+/++
+    Returns all Requests on the current json level
+    Expects the content of a transaction as input
++/
+Request[] getRequests(JSONValue json)
+{
+    auto api = new APIElement(json);
+    Request[] requests;
+
+    foreach(APIElement requestElement; api.getChildrenByElementType(ElementTypes.Request))
+    {
+        string jsonExample = "";
+        string description = "";
+
+        auto foo = new APIElement(requestElement.content);
+
+        APIElement requestAsset = foo.findFirstElement(ElementTypes.Asset);
+        if(requestAsset)
+            jsonExample = requestAsset.content.str;
+
+
+        APIElement requestDescription = foo.findFirstElement(ElementTypes.Description);
+
+        if(requestDescription)
+            description = requestDescription.content.str;
+
+        Request request = Request(jsonExample, description);
+
+        requests ~= request;
+    }
+
+    return requests;
+}
+
 /++
     Returns all actions (HTTP methods) on the current json level
+    Expects the content of a Resource as input
 +/
 Action[] getActions(JSONValue jsonTree)
 {
@@ -51,9 +119,13 @@ Action[] getActions(JSONValue jsonTree)
     {
         auto title = actionElement.title;
         auto description = actionElement.description;
+        auto httpMethod = "";
+        Request[] requests;
+        Response[] responses;
 
+        // NOTE multiple transactions and mmultiple requests / responses within a transaction may not work
         APIElement transaction = new APIElement(actionElement.content);
-        transaction = transaction.findFirstElement(ElementTypes.Transaction); //new APIElement(actionElement.content[0]);  // TODO implement support for multiple transactions within an Action / transition
+        transaction = transaction.findFirstElement(ElementTypes.Transaction);
 
         //TODO check element type
         if(transaction)
@@ -62,12 +134,15 @@ Action[] getActions(JSONValue jsonTree)
             APIElement requestElement = transactionItems.findFirstElement(ElementTypes.Request);
 
             // NOTE this technically belongs to the Request, not to the Action
+            if(requestElement)
+                httpMethod = requestElement.getElementOrEmptyString(["attributes", "method"]);
 
-            auto httpMethod = requestElement.getElementOrEmptyString(["attributes", "method"]);
-            writeln(httpMethod);
+            requests = getRequests(transaction.content);
+            responses = getResponses(transaction.content);
         }
 
-
+        auto action = Action(title, description, httpMethod, requests, responses);
+        actions ~= action;
     }
 
     return actions;

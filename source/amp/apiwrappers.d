@@ -83,7 +83,7 @@ struct Action
 {
     string title;
     string description;
-    HTTPMethod httpMethod;
+    string httpMethod;
 
     Request[] requests;
     Response[] responses;
