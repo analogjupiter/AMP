@@ -25,7 +25,10 @@ enum ElementTypes{
     ResourceGroup = "resourceGroup",
     Resource = "resource",
     Action = "transition",
-    Description = "description"
+    Description = "description",
+    Transaction = "httpTransaction",
+    Request = "httpRequest",
+    Response = "httpResponse"
 }
 
 /++
@@ -99,11 +102,11 @@ class APIElement
     }
 
     /++
-        Returns the element at the end of the key sequence,
-        if one of the keys does not exist, an empty string is returned
+        Returns the content of the element at the end of the key sequence,
+        if one of the keys or the content does not exist, an empty string is returned
 
         Example: keys = ["a", "b"]
-        returns json["a"]["b"] or ""
+        returns json["a"]["b"]["content"] or ""
     +/
     string getElementOrEmptyString(string[] keys)
     {
@@ -119,12 +122,31 @@ class APIElement
 
         try
         {
-            return content.str;
+            return content["content"].str;
         }
         catch(JSONException ex)
         {
             return "";
         }
+    }
+
+    /++
+        Returns the frist element found of the specified type,
+        returns null if the Element is not found
+    +/
+    APIElement findFirstElement(string elementType)
+    {
+        if(this.jsonElement.type != JSON_TYPE.ARRAY)
+            throw new Exception("Find first element - JSONValue is not an array");
+
+        foreach(JSONValue potentialElement; this.jsonElement.array)
+        {
+            auto apiElement = new APIElement(potentialElement);
+            if(apiElement.isElementType(elementType))
+                return apiElement;
+        }
+
+        return null;     // TODO
     }
 
     /++
@@ -138,7 +160,7 @@ class APIElement
         {
             auto apiElement = new APIElement(json);
 
-            if(apiElement.isElementType(ElementTypes.Resource))
+            if(apiElement.isElementType(elementType))
             {
                 children ~= apiElement;
             }
