@@ -165,7 +165,7 @@ Action[] getActions(APIElement api)
             responses = getResponses(transaction.content);
         }
 
-        actions ~= Action(title, description, httpMethod, requests, responses);
+        actions ~= Action(title, description, httpMethod, requests, responses, getParameters);
     }
 
     return actions;
