@@ -45,7 +45,7 @@ GETParameter[] getGETParameters(APIElement api)
     {
         string name = param.getContentOrEmptyString(["content", "key"]);
         string dataType = param.title;
-        string description = param.description;
+        string description = param.getContentOrEmptyString(["meta", "description"]);
         string constraint = "";
 
         APIElement constraintElements = param.getAPIElementOrNull(["attributes", "typeAttributes", "content"]);
@@ -199,7 +199,7 @@ Group[] getGroups(APIElement api)
 
     foreach(APIElement group; api.getChildrenByElementType(ElementTypes.Group))
     {
-        if(api.jsonElement["meta"]["classes"]["content"][0]["content"].str == ElementTypes.ResourceGroup)
+        if(group.jsonElement["meta"]["classes"]["content"][0]["content"].str == ElementTypes.ResourceGroup)
         {
             groups ~= Group(group.title, group.description, getResources(group.content));
         }

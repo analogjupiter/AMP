@@ -86,6 +86,8 @@ class APIElement
         +/
         string description()
         {
+            writeln("++++++++++++++++++++++++++++++++++++++++");
+            writeln(this.content.jsonElement);
             auto descriptions = this.content.getChildrenByElementType(ElementTypes.Description);
 
             if(descriptions.length == 0)
