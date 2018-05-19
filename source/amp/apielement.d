@@ -25,7 +25,7 @@ enum ElementTypes{
     ResourceGroup = "resourceGroup",
     Resource = "resource",
     Action = "transition",
-    Description = "description",
+    Description = "copy",
     Transaction = "httpTransaction",
     Request = "httpRequest",
     Response = "httpResponse",
@@ -86,8 +86,6 @@ class APIElement
         +/
         string description()
         {
-            writeln("++++++++++++++++++++++++++++++++++++++++");
-            writeln(this.content.jsonElement);
             auto descriptions = this.content.getChildrenByElementType(ElementTypes.Description);
 
             if(descriptions.length == 0)
