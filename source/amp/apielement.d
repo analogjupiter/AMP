@@ -55,9 +55,21 @@ class APIElement
         /++
             Location: content
         +/
-        JSONValue content()
+        APIElement content()
         {
-            return this.jsonElement["content"];
+            return new APIElement(jsonElement["content"]);
+        }
+
+        /++
+            Returns the content as string
+            If the content is not a string, an empty string is returned
+        +/
+        string contentstr()
+        {
+            if(jsonElement["element"].str == "string")
+                return jsonElement["content"].str;
+            else
+                return "";
         }
 
         /++
@@ -65,40 +77,31 @@ class APIElement
         +/
         string title()
         {
-            try
-            {
-                return this.jsonElement["meta"]["title"]["content"].str;
-            }
-            catch(JSONException ex)
-            {
-                return "";
-            }
+            return getContentOrEmptyString(["meta", "title"]);
         }
 
         /++
+            Returns the description or an empty string
             Location: content -> element of type "copy" -> content
         +/
         string description()
         {
-            try
-            {
-                /++ TODO search all elements instead of just taking the first one +/
-                if(this.content[0]["element"].str != "copy")
-                    writeln("The description could not be found!!");
-                return this.content[0]["content"].str;
-            }
-            catch(JSONException ex)
-            {
+            auto descriptions = this.content.getChildrenByElementType(ElementTypes.Description);
+
+            if(descriptions.length == 0)
                 return "";
+            else if(descriptions.length == 1)
+                return descriptions[0].contentstr;
+            else
+            {
+                writeln("WARNING: Multiple descriptions found for: ", this.jsonElement.toPrettyString());
+                return descriptions[0].contentstr;      // NOTE only the first one is used
             }
         }
 
         APIElement attributes()
         {
-            if("attributes" in this.jsonElement)
-                return new APIElement(this.jsonElement["attributes"]);
-            else
-                return null;
+            return this.getAPIElementOrNull(["attributes"]);
         }
     }
 
@@ -113,13 +116,13 @@ class APIElement
 
 
     /++
-        Returns the content of the element at the end of the key sequence,
-        if one of the keys or the content does not exist, an empty string is returned
+        Returns the element at the end of the key sequence
+        or null if a key does not exist
 
         Example: keys = ["a", "b"]
-        returns json["a"]["b"]["content"] or ""
+        returns json["a"]["b"] or null
     +/
-    string getElementOrEmptyString(string[] keys)
+    APIElement getAPIElementOrNull(string[] keys)
     {
         JSONValue content = this.jsonElement;
 
@@ -128,17 +131,27 @@ class APIElement
             if(key in content)
                 content = content[key];
             else
-                return "";
+                return null;
         }
 
-        try
-        {
-            return content["content"].str;
-        }
-        catch(JSONException ex)
-        {
+        return new APIElement(content);
+    }
+
+    /++
+        Returns the content of the element at the end of the key sequence,
+        if one of the keys or the content does not exist, an empty string is returned
+
+        Example: keys = ["a", "b"]
+        returns json["a"]["b"]["content"].str or ""
+    +/
+    string getContentOrEmptyString(string[] keys)
+    {
+        APIElement element = this.getAPIElementOrNull(keys);
+
+        if(element)
+            return element.contentstr;
+        else
             return "";
-        }
     }
 
     /++
@@ -167,9 +180,9 @@ class APIElement
     {
         APIElement[] children;
 
-        foreach(JSONValue json; jsonElement.array)
+        foreach(JSONValue child; jsonElement.array)
         {
-            auto apiElement = new APIElement(json);
+            auto apiElement = new APIElement(child);
 
             if(apiElement.isElementType(elementType))
             {
