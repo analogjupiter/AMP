@@ -66,7 +66,7 @@ class APIElement
         +/
         string contentstr()
         {
-            if(jsonElement["element"].str == "string")
+            if("content" in jsonElement)
                 return jsonElement["content"].str;
             else
                 return "";
