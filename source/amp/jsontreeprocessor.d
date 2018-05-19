@@ -77,11 +77,10 @@ Response[] getResponses(APIElement api)
 
         APIElement responseAsset = responseContent.findFirstElement(ElementTypes.Asset);
         if(responseAsset)
-            jsonExample = responseAsset.contentstr;
+            jsonExample = responseAsset.content.jsonElement.str;
 
 
         APIElement responseDescription = responseContent.findFirstElement(ElementTypes.Description);
-
         if(responseDescription)
             description = responseDescription.contentstr;
 
@@ -113,7 +112,7 @@ Request[] getRequests(APIElement api)
         // TODO add support for multiple assets
         APIElement requestAsset = requestContent.findFirstElement(ElementTypes.Asset);
         if(requestAsset)
-            jsonExample = requestAsset.contentstr;
+            jsonExample = requestAsset.content.jsonElement.str;
 
 
         APIElement requestDescription = requestContent.findFirstElement(ElementTypes.Description);
