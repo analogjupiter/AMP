@@ -34,6 +34,34 @@ Attribute[] getAttributes(JSONValue jsonTree)
 
 
 /++
+    Returns all GET parameters that are found at the top json level
+    Expects content of hrefVarialbes
++/
+GETParameter[] getGETParameters(JSONValue json)
+{
+    auto api = new APIElement(json);
+    GETParameter[] params;
+
+    foreach(APIElement paramElement; api.getChildrenByElementType(ElementTypes.Member))
+    {
+        string name = paramElement.getElementOrEmptyString(["content", "key"]);
+        string dataType = paramElement.title;
+        string description = paramElement.description;
+        string constraint = "";
+
+        writeln(paramElement.attributes.jsonElement["typeAttributes"]);
+        if("typeAttributes" in paramElement.attributes.jsonElement)
+        constraint = paramElement.attributes.jsonElement["typeAttributes"]["content"][0]["content"].str;
+
+        bool isRequired = constraint != "optional";
+
+        params ~= GETParameter(name, dataType, description, isRequired);
+    }
+
+    return params;
+}
+
+/++
     Returns all Responses on the current json level
     Expects the content of a transaction as input
 +/
@@ -122,6 +150,14 @@ Action[] getActions(JSONValue jsonTree)
         auto httpMethod = "";
         Request[] requests;
         Response[] responses;
+        GETParameter[] getParameters;
+
+        if("attributes" in actionElement.jsonElement)
+        {
+            APIElement hrefVariables = new APIElement(actionElement.jsonElement["attributes"]["hrefVariables"]);
+            if("content" in hrefVariables.jsonElement)
+                getParameters = getGETParameters(hrefVariables.content);
+        }
 
         // NOTE multiple transactions and mmultiple requests / responses within a transaction may not work
         APIElement transaction = new APIElement(actionElement.content);

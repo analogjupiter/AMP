@@ -29,6 +29,7 @@ enum ElementTypes{
     Transaction = "httpTransaction",
     Request = "httpRequest",
     Response = "httpResponse",
+    Member = "member",
     Asset = "asset"         // Part of a Request or Response containing the message body
 }
 
@@ -91,6 +92,14 @@ class APIElement
                 return "";
             }
         }
+
+        APIElement attributes()
+        {
+            if("attributes" in this.jsonElement)
+                return new APIElement(this.jsonElement["attributes"]);
+            else
+                return null;
+        }
     }
 
     /++
@@ -101,6 +110,7 @@ class APIElement
     {
         return this.jsonElement["element"].str == type;
     }
+
 
     /++
         Returns the content of the element at the end of the key sequence,

@@ -52,7 +52,7 @@ struct Attribute
     string description;
 }
 
-struct GetParameter
+struct GETParameter
 {
     string name;
     string dataType;
@@ -87,7 +87,7 @@ struct Action
 
     Request[] requests;
     Response[] responses;
-    GetParameter[] getParameters;
+    GETParameter[] getParameters;
     Attribute[] attributes;
 }
 
