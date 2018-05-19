@@ -28,8 +28,28 @@ import std.conv : to;
 
 Attribute[] getAttributes(APIElement api)
 {
-    Attribute[] a;
-    return a;
+    Attribute[] attributes;
+
+    foreach(APIElement attribute; api.getChildrenByElementType(ElementTypes.Member))
+    {
+        string description = attribute.getContentOrEmptyString(["meta", "description"]);
+        string name = attribute.getAPIElementOrNull(["content", "key"]).contentstr;
+        string dataType = attribute.getAPIElementOrNull(["content", "value", "element"]).jsonElement.str;
+
+        if(dataType == "array")
+        {
+            auto arrayContent = attribute.getAPIElementOrNull(["content", "value", "content"]);
+            if(arrayContent)
+            {
+                auto arrayElement = arrayContent.jsonElement[0]["element"].str;
+                dataType ~= "[" ~ arrayElement ~"]";
+            }
+        }
+
+        attributes ~= Attribute(name, dataType, description);
+    }
+
+    return attributes;
 }
 
 
@@ -142,10 +162,15 @@ Action[] getActions(APIElement api)
         Request[] requests;
         Response[] responses;
         GETParameter[] getParameters;
+        Attribute[] attributes;
 
         APIElement parameters = action.getAPIElementOrNull(["attributes", "hrefVariables", "content"]);
         if(parameters)
             getParameters = getGETParameters(parameters);
+
+        APIElement attributeElements = action.getAPIElementOrNull(["attributes", "data", "content", "content"]);
+        if(attributeElements)
+            attributes = getAttributes(attributeElements);
 
         // NOTE multiple transactions and mmultiple requests / responses within a transaction will not work
         APIElement transaction = action.content;
@@ -164,7 +189,7 @@ Action[] getActions(APIElement api)
             responses = getResponses(transaction.content);
         }
 
-        actions ~= Action(title, description, httpMethod, requests, responses, getParameters);
+        actions ~= Action(title, description, httpMethod, requests, responses, getParameters, attributes);
     }
 
     return actions;
@@ -181,9 +206,9 @@ Resource[] getResources(APIElement api)
         auto description = resource.description;
 
         auto actions = getActions(resource.content);
-        auto attributes = getAttributes(resource);
+        //auto attributes = getAttributes(resource);
 
-        resources ~= Resource(title, url, description, actions, attributes);
+        resources ~= Resource(title, url, description, actions);
     }
 
     return resources;
