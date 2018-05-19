@@ -35,7 +35,7 @@
  +/
 module amp.parser;
 
-import amp.jsontreeprocessor;
+import amp.jsonprocessor;
 import amp.apiwrappers;
 
 import std.conv : to;
@@ -77,7 +77,7 @@ ParserResult parseBlueprint(string filePath)
     errorText = pipes.stderr.rawRead(errorText);
 
     JSONValue json = parseJSON(jsonText);
-    auto api = parse(json);
+    auto api = process(json);
 
     writeln(api.to!(string));
 

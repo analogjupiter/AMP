@@ -20,7 +20,7 @@ module amp.apielement;
 import std.stdio;
 import std.json;
 
-enum ElementTypes{
+enum ElementType{
     Group = "category",
     ResourceGroup = "resourceGroup",
     Resource = "resource",
@@ -87,7 +87,7 @@ class APIElement
         +/
         string description()
         {
-            auto descriptions = this.content.getChildrenByElementType(ElementTypes.Description);
+            auto descriptions = this.content.getChildrenByElementType(ElementType.Description);
 
             if(descriptions.length == 0)
                 return "";

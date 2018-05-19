@@ -16,7 +16,7 @@
     You should have received a copy of the GNU Affero General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
  +/
-module amp.jsontreeprocessor;
+module amp.jsonprocessor;
 
 import amp.parser;
 import amp.apielement;
@@ -34,7 +34,7 @@ Attribute[] getAttributes(APIElement api)
 {
     Attribute[] attributes;
 
-    foreach(APIElement attribute; api.getChildrenByElementType(ElementTypes.Member))
+    foreach(APIElement attribute; api.getChildrenByElementType(ElementType.Member))
     {
         string description = attribute.getContentOrEmptyString(["meta", "description"]);
         string name = attribute.getAPIElementOrNull(["content", "key"]).contentstr;
@@ -65,7 +65,7 @@ GETParameter[] getGETParameters(APIElement api)
 {
     GETParameter[] params;
 
-    foreach(APIElement param; api.getChildrenByElementType(ElementTypes.Member))
+    foreach(APIElement param; api.getChildrenByElementType(ElementType.Member))
     {
         string name = param.getContentOrEmptyString(["content", "key"]);
         string dataType = param.title;
@@ -92,19 +92,19 @@ Response[] getResponses(APIElement api)
 {
     Response[] responses;
 
-    foreach(APIElement response; api.getChildrenByElementType(ElementTypes.Response))
+    foreach(APIElement response; api.getChildrenByElementType(ElementType.Response))
     {
         string jsonExample = "";
         string description = "";
 
         auto responseContent = response.content;
 
-        APIElement responseAsset = responseContent.findFirstElement(ElementTypes.Asset);
+        APIElement responseAsset = responseContent.findFirstElement(ElementType.Asset);
         if(responseAsset)
             jsonExample = responseAsset.content.jsonElement.str;
 
 
-        APIElement responseDescription = responseContent.findFirstElement(ElementTypes.Description);
+        APIElement responseDescription = responseContent.findFirstElement(ElementType.Description);
         if(responseDescription)
             description = responseDescription.contentstr;
 
@@ -125,7 +125,7 @@ Request[] getRequests(APIElement api)
 {
     Request[] requests;
 
-    foreach(APIElement request; api.getChildrenByElementType(ElementTypes.Request))
+    foreach(APIElement request; api.getChildrenByElementType(ElementType.Request))
     {
         string jsonExample = "";
         string description = "";
@@ -134,12 +134,12 @@ Request[] getRequests(APIElement api)
 
 
         // TODO add support for multiple assets
-        APIElement requestAsset = requestContent.findFirstElement(ElementTypes.Asset);
+        APIElement requestAsset = requestContent.findFirstElement(ElementType.Asset);
         if(requestAsset)
             jsonExample = requestAsset.content.jsonElement.str;
 
 
-        APIElement requestDescription = requestContent.findFirstElement(ElementTypes.Description);
+        APIElement requestDescription = requestContent.findFirstElement(ElementType.Description);
         if(requestDescription)
             description = requestDescription.contentstr;
 
@@ -158,7 +158,7 @@ Action[] getActions(APIElement api)
 {
     Action[] actions;
 
-    foreach(APIElement action; api.getChildrenByElementType(ElementTypes.Action))
+    foreach(APIElement action; api.getChildrenByElementType(ElementType.Action))
     {
         auto title = action.title;
         auto description = action.description;
@@ -178,12 +178,12 @@ Action[] getActions(APIElement api)
 
         // NOTE multiple transactions and mmultiple requests / responses within a transaction will not work
         APIElement transaction = action.content;
-        transaction = transaction.findFirstElement(ElementTypes.Transaction);
+        transaction = transaction.findFirstElement(ElementType.Transaction);
 
         if(transaction)
         {
             APIElement transactionItems = transaction.content;
-            APIElement requestElement = transactionItems.findFirstElement(ElementTypes.Request);
+            APIElement requestElement = transactionItems.findFirstElement(ElementType.Request);
 
             // NOTE this technically belongs to the Request, not to the Action
             if(requestElement)
@@ -203,7 +203,7 @@ Resource[] getResources(APIElement api)
 {
     Resource[] resources;
 
-    foreach(APIElement resource; api.getChildrenByElementType(ElementTypes.Resource))
+    foreach(APIElement resource; api.getChildrenByElementType(ElementType.Resource))
     {
         auto title = resource.title;
         auto url = resource.getContentOrEmptyString(["attributes", "href"]);
@@ -211,8 +211,8 @@ Resource[] getResources(APIElement api)
         Attribute[] attributes;
 
         auto actions = getActions(resource.content);
-        writeln("HI");
-        APIElement dataStructure = resource.content.findFirstElement(ElementTypes.Attribute);
+
+        APIElement dataStructure = resource.content.findFirstElement(ElementType.Attribute);
         if(dataStructure)
         {
             auto attributeElements = dataStructure.getAPIElementOrNull(["content", "content"]);
@@ -233,9 +233,9 @@ Group[] getGroups(APIElement api)
 {
     Group[] groups;
 
-    foreach(APIElement group; api.getChildrenByElementType(ElementTypes.Group))
+    foreach(APIElement group; api.getChildrenByElementType(ElementType.Group))
     {
-        if(group.jsonElement["meta"]["classes"]["content"][0]["content"].str == ElementTypes.ResourceGroup)
+        if(group.jsonElement["meta"]["classes"]["content"][0]["content"].str == ElementType.ResourceGroup)
         {
             groups ~= Group(group.title, group.description, getResources(group.content));
         }
@@ -248,7 +248,7 @@ Group[] getGroups(APIElement api)
     Converts the first (root) Element into an APIRoot
     TODO implement functionality to handle mutliple "APIRoots"
 +/
-APIRoot parseRoot(JSONValue json)
+APIRoot getAPIRoot(JSONValue json)
 {
     if(json["element"].str != "category")
         writeln("Root element not found!");
@@ -264,11 +264,11 @@ APIRoot parseRoot(JSONValue json)
 /++
     Converts the provided JSON into an APIRoot object
 +/
-APIRoot parse(JSONValue jsonTree)
+APIRoot process(JSONValue json)
 {
-    JSONValue firstElement = jsonTree["content"][0];
+    JSONValue firstElement = json["content"][0];
 
-    auto api = parseRoot(firstElement);
+    auto api = getAPIRoot(firstElement);
 
     return api;
 }
