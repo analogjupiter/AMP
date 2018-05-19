@@ -26,6 +26,10 @@ import std.stdio;
 import std.json;
 import std.conv : to;
 
+/++
+    Input: List of members containing attributes
+    Location: Resource -> content -> datastructure -> content
++/
 Attribute[] getAttributes(APIElement api)
 {
     Attribute[] attributes;
@@ -204,11 +208,19 @@ Resource[] getResources(APIElement api)
         auto title = resource.title;
         auto url = resource.getContentOrEmptyString(["attributes", "href"]);
         auto description = resource.description;
+        Attribute[] attributes;
 
         auto actions = getActions(resource.content);
-        //auto attributes = getAttributes(resource);
+        writeln("HI");
+        APIElement dataStructure = resource.content.findFirstElement(ElementTypes.Attribute);
+        if(dataStructure)
+        {
+            auto attributeElements = dataStructure.getAPIElementOrNull(["content", "content"]);
+            if(attributeElements)
+                attributes = getAttributes(attributeElements);
+        }
 
-        resources ~= Resource(title, url, description, actions);
+        resources ~= Resource(title, url, description, actions, attributes);
     }
 
     return resources;

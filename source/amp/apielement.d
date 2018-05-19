@@ -30,7 +30,8 @@ enum ElementTypes{
     Request = "httpRequest",
     Response = "httpResponse",
     Member = "member",
-    Asset = "asset"         // Part of a Request or Response containing the message body
+    Asset = "asset",         // Part of a Request or Response containing the message body
+    Attribute = "dataStructure"
 }
 
 /++
