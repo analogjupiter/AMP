@@ -33,7 +33,7 @@ import std.conv : to;
 Attribute[] getAttributes(APIElement api)
 {
     Attribute[] attributes;
-
+    // TODO add support for default values
     foreach(APIElement attribute; api.getChildrenByElementType(ElementType.Member))
     {
         string description = attribute.getContentOrEmptyString(["meta", "description"]);
@@ -64,6 +64,7 @@ Attribute[] getAttributes(APIElement api)
 GETParameter[] getGETParameters(APIElement api)
 {
     GETParameter[] params;
+    // TODO implement support for default values
 
     foreach(APIElement param; api.getChildrenByElementType(ElementType.Member))
     {
