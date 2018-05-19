@@ -1,0 +1,187 @@
+/**
+ * Foundation for Sites by ZURB
+ * Version 6.4.4-rc1
+ * foundation.zurb.com
+ * Licensed under MIT Open Source
+ */
+/* line 4, ../sass/machine-section.scss */
+.machine-section {
+  padding: 0 1.5em;
+  background-color: #1f2227;
+  color: white;
+  height: 100vh;
+  overflow-y: scroll;
+}
+/* line 11, ../sass/machine-section.scss */
+.machine-section .seperator {
+  border-top: 1px solid #444;
+  margin-top: 3em;
+}
+/* line 16, ../sass/machine-section.scss */
+.machine-section .variable-table tr {
+  border-color: #444;
+}
+/* line 20, ../sass/machine-section.scss */
+.machine-section .block-description {
+  color: #aaa;
+}
+/* line 24, ../sass/machine-section.scss */
+.machine-section h3 {
+  color: white;
+}
+@media screen and (max-width: 63.9375em) {
+  /* line 4, ../sass/machine-section.scss */
+  .machine-section {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 100vw;
+  }
+}
+
+/* line 37, ../sass/machine-section.scss */
+.ms-head {
+  display: flex;
+  padding-top: 1em;
+  padding-bottom: 1em;
+  border-bottom: 1px solid #444;
+}
+/* line 43, ../sass/machine-section.scss */
+.ms-head .closeMsButton {
+  color: white;
+  width: 1em;
+}
+/* line 46, ../sass/machine-section.scss */
+.ms-head .closeMsButton:hover {
+  cursor: pointer;
+  color: #ddd;
+}
+/* line 52, ../sass/machine-section.scss */
+.ms-head .ms-heading {
+  margin-top: 0;
+  margin-left: 1em;
+}
+
+/* line 58, ../sass/machine-section.scss */
+.ms-url {
+  display: flex;
+  margin-bottom: 1.5em;
+  padding: 1em 0;
+  border-bottom: 1px solid #444;
+  font-family: monospace;
+  font-size: 1.2em;
+}
+/* line 67, ../sass/machine-section.scss */
+.ms-url .url {
+  margin-top: 0;
+  margin-bottom: 0;
+  margin-left: 1.5em;
+  padding-top: .2em;
+}
+/* line 73, ../sass/machine-section.scss */
+.ms-url .url .url-action {
+  font-weight: bold;
+}
+/* line 77, ../sass/machine-section.scss */
+.ms-url .url .url-parameter {
+  font-weight: bold;
+  color: #E87E04;
+}
+
+/* line 87, ../sass/machine-section.scss */
+.machine-section .attributes tbody, .machine-section .attributes tr,
+.machine-section .parameters tbody,
+.machine-section .parameters tr {
+  background-color: transparent;
+}
+
+/* line 92, ../sass/machine-section.scss */
+.hide {
+  display: none;
+}
+
+/* line 96, ../sass/machine-section.scss */
+.response .heading {
+  display: flex;
+  align-items: center;
+}
+/* line 100, ../sass/machine-section.scss */
+.response .heading .message-code {
+  margin-left: 2em;
+}
+
+/* line 105, ../sass/machine-section.scss */
+.message-code {
+  font-family: monospace;
+  font-size: 1.2em;
+}
+/* line 109, ../sass/machine-section.scss */
+.message-code .code {
+  background-color: white;
+  padding: .3em .5em;
+  color: white;
+  font-weight: bold;
+}
+/* line 117, ../sass/machine-section.scss */
+.message-code.information .code {
+  background-color: #95A5A6;
+}
+/* line 120, ../sass/machine-section.scss */
+.message-code.information .status {
+  color: #95A5A6;
+}
+/* line 126, ../sass/machine-section.scss */
+.message-code.success .code {
+  background-color: #2baf3b;
+}
+/* line 129, ../sass/machine-section.scss */
+.message-code.success .status {
+  color: #2baf3b;
+}
+/* line 135, ../sass/machine-section.scss */
+.message-code.redirect .code {
+  background-color: #F7CA18;
+}
+/* line 138, ../sass/machine-section.scss */
+.message-code.redirect .status {
+  color: #F7CA18;
+}
+/* line 144, ../sass/machine-section.scss */
+.message-code.client-error .code {
+  background-color: #D91E18;
+}
+/* line 147, ../sass/machine-section.scss */
+.message-code.client-error .status {
+  color: #D91E18;
+}
+/* line 153, ../sass/machine-section.scss */
+.message-code.server-error .code {
+  background-color: #E87E04;
+}
+/* line 156, ../sass/machine-section.scss */
+.message-code.server-error .status {
+  color: #E87E04;
+}
+
+/* line 162, ../sass/machine-section.scss */
+.json {
+  font-family: monospace;
+  font-size: 1.1em;
+  padding: .3em .5em;
+  background-color: #2a2e35;
+}
+/* line 168, ../sass/machine-section.scss */
+.json .text {
+  color: #b1bdbd;
+}
+/* line 172, ../sass/machine-section.scss */
+.json .key {
+  color: #947CB0;
+}
+/* line 176, ../sass/machine-section.scss */
+.json .nr {
+  color: #F7CA18;
+}
+
+/*# sourceMappingURL=machine-section.css.map */
