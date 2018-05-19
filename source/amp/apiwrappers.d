@@ -35,6 +35,8 @@
  +/
 module amp.apiwrappers;
 
+import std.array;
+import std.conv : to;
 
 
 enum HTTPMethod{
@@ -89,6 +91,42 @@ struct Action
     Response[] responses;
     GETParameter[] getParameters;
     Attribute[] attributes;
+
+    string toString()
+    {
+        auto app = appender!string;
+
+        app ~= "#ACTION ";
+        app ~= title ~ "\t\t" ~ httpMethod;
+        app ~= "\n" ~ description;
+        app ~= "\nREQUESTS:";
+
+        foreach(Request request; requests)
+        {
+            app ~= "\n\t" ~ request.to!string;
+        }
+
+        app ~= "\nRESPONSES:";
+
+        foreach(Response response; responses)
+        {
+            app ~= "\n\t" ~ response.to!string;
+        }
+
+        app ~= "\nPARAMS:";
+        foreach(GETParameter param; getParameters)
+        {
+            app ~= "\n\t" ~ param.to!string;
+        }
+
+        app ~= "\nATTRIBUTES:";
+        foreach(Attribute attribute; attributes)
+        {
+            app ~= "\n\t" ~ attribute.to!string;
+        }
+
+        return app.data;
+    }
 }
 
 struct Resource
@@ -99,6 +137,30 @@ struct Resource
 
     Action[] actions;       // = HTTP Methods
     Attribute[] attributes;     // = data type definitions
+
+
+    string toString()
+    {
+        auto app = appender!string;
+
+        app ~= "#RESOURCE ";
+        app ~= title ~ "\t\t" ~ url;
+        app ~= "\n" ~ description ~ "\n";
+
+        foreach(Attribute attribute; attributes)
+        {
+            app ~= "\n" ~ attribute.to!string;
+        }
+
+        app ~= "\n";
+
+        foreach(Action action; actions)
+        {
+            app ~= "\n\n" ~ action.to!string;
+        }
+
+        return app.data;
+    }
 }
 
 struct Group
@@ -107,6 +169,22 @@ struct Group
     string description;
 
     Resource[] resources;
+
+    string toString()
+    {
+        auto app = appender!string;
+
+        app ~= "#GROUP ";
+        app ~= title;
+        app ~= "\n" ~ description;
+
+        foreach(Resource resource; resources)
+        {
+            app ~= "\n\n\n" ~ resource.to!string;
+        }
+
+        return app.data;
+    }
 }
 
 struct APIRoot
@@ -115,4 +193,20 @@ struct APIRoot
     string description;
 
     Group[] groups;
+
+    string toString()
+    {
+        auto app = appender!string;
+
+        app ~= "#API ROOT ";
+        app ~= title;
+        app ~= "\n" ~ description;
+
+        foreach(Group group; groups)
+        {
+            app ~= "\n\n\n" ~ group.to!string;
+        }
+
+        return app.data;
+    }
 }
