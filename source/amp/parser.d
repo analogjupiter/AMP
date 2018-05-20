@@ -78,9 +78,9 @@ ParserResult parseBlueprint(string filePath)
     errorText = pipes.stderr.rawRead(errorText);
 
     JSONValue json = parseJSON(jsonText);
-    auto api = process(json);
+    r.api = process(json);
 
-    writeln(api.to!(string));
+    //writeln(api.to!(string));
 
     return r;
 }
