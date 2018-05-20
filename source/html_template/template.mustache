@@ -77,7 +77,7 @@
 
               <div class="actions">
                 {{#actions}}
-                <div class="action" id="action-{{id}}" onclick="openMs(0)">
+                <div class="action" id="action-{{id}}" onclick="openMs({{id}})">
                   <div class="http-method-flag get"></div>
                   <span class="action-name">{{title}}</span>
                 </div>
@@ -95,9 +95,9 @@
       {{#groups}}
       {{#resources}}
       {{#actions}}
-      <div class="cell large-5 machine-section hide" id="ms-action-0">
+      <div class="cell large-5 machine-section hide" id="ms-action-{{id}}">
         <div class="ms-head">
-          <button onclick="closeMs(0)" class="closeMsButton">x</button>
+          <button onclick="closeMs({{id}})" class="closeMsButton">x</button>
 
           <h3 class="ms-heading">
             {{title}}
