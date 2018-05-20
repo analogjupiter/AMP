@@ -14,5 +14,9 @@
         "source/amp/str"
     ],
 
-    "targetPath": "bin"
+    "targetPath": "bin",
+
+    "dependencies": {
+        "mustache-d": "~>0.1.3"
+    }
 }
