@@ -69,6 +69,8 @@ struct Request
     int id;
     string jsonExample;
     string description;
+
+    Attribute[] attributes;
 }
 
 struct Response
@@ -76,8 +78,9 @@ struct Response
     int id;
     string jsonExample;
     string description;
-
     int httpStatusCode;
+
+    Attribute[] attributes;
 }
 
 /++
@@ -143,7 +146,7 @@ struct Resource
 
     Action[] actions;       // = HTTP Methods
     Attribute[] attributes;     // = data type definitions
-
+    GETParameter[] getParameters;       //HREF params for all actions i.e. /users/{id}
 
     string toString()
     {
