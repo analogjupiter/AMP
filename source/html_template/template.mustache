@@ -55,7 +55,7 @@
           <div class="content">
             {{#resources}}
             <div class="ressource" id="ressource-{{id}}">
-              <h3>{{title}}</h3>
+              <h3>{{title}} - {{url}}</h3>      <!-- TODO change style of URL -->
               <p class="block-description">{{description}}</p>
 
               <div class="attributes">
@@ -95,6 +95,9 @@
       {{#groups}}
       {{#resources}}
       {{#actions}}
+
+      <!-- Detailed Actions -->
+
       <div class="cell large-5 machine-section hide" id="ms-action-{{id}}">
         <div class="ms-head">
           <button onclick="closeMs({{id}})" class="closeMsButton">x</button>
@@ -108,7 +111,7 @@
           <div class="http-method-badge get">
             {{httpMethod}}
           </div>
-          <p class="url">{{url}}/<span class="url-action">notes</span>/
+          <p class="url">{{url}} <!-- TODO write last part bold /<span class="url-action">notes</span>/ -->
           </p>
         </div>
 
@@ -118,12 +121,11 @@
 
         <div class="seperator"></div>
 
-
         <div class="parameters">        <!-- TODO delete this section, if no params exist -->
           <h4>Parameters</h4>
           <table class="unstriped variable-table">
             <tbody>
-              {{#parameters}}
+              {{#getParameters}}
               <tr>
                 <td class="name"><span>{{name}}</span></td>
                 <td>
@@ -139,12 +141,27 @@
                   <span class="default-value">-</span>  <!-- TODO support default values -->
                 </td>
               </tr>
-              {{/parameters}}
+              {{/getParameters}}
+              {{#resourceGetParameters}}
+              <tr>
+                <td class="name"><span>{{name}}</span></td>
+                <td>
+                  <span class="required">{{#isRequired}}req{{/isRequired}}{{^isRequired}}opt{{/isRequired}}</span>  <!-- TODO change to string -->
+                </td>
+                <td>
+                  <span class="datatype">{{dataType}}</span>
+                </td>
+                <td>
+                  <span class="description">{{description}}</span>
+                </td>
+                <td>
+                  <span class="default-value">-</span>  <!-- TODO support default values -->
+                </td>
+              </tr>
+              {{/resourceGetParameters}}
             </tbody>
           </table>
         </div>
-
-
 
         <div class="seperator"></div>
 
@@ -154,7 +171,7 @@
             <tbody>
               {{#attributes}}
               <tr>
-                <td class="name">child_notes</td>
+                <td class="name">{{name}}</td>
                 <td>
                   <span class="datatype">{{dataType}}</span>
                   <span class="description">{{description}}</span>
@@ -172,19 +189,21 @@
 
           <div class="message-headers">
             <h5>Headers</h5>
-            <pre class="json"> <!-- TODO Support headers -->
+            <!-- TODO Support headers -->
+<pre class="json">
 <span class="key">Content-Type</span>: <span class="text">application/json</span>
-            </pre>
+</pre>
           </div>
 
           <p class="block-description">{{description}}</p>
-
+          {{#jsonExample}}
           <div class="message-body">
             <h5>Body</h5>
-            <pre class="json">
+<pre class="json">
 {{jsonExample}}
-            </pre>
+</pre>
           </div>
+          {{/jsonExample}}
         </div>
         {{/requests}}
 
@@ -208,16 +227,17 @@
 
           <div class="message-headers">
             <h5>Headers</h5>
-            <pre class="json">  <!-- TODO support headers -->
+            <!-- TODO support headers -->
+<pre class="json">
 <span class="key">Content-Type</span>: <span class="text">application/json</span>
-            </pre>
+</pre>
           </div>
 
           <div class="message-body">
             <h5>Body</h5>
-            <pre class="json">
+<pre class="json">
 {{jsonExample}}
-            </pre>
+</pre>
           </div>
         </div>
         {{/responses}}
