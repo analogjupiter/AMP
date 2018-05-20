@@ -35,6 +35,20 @@ int nextID = 0;
 Attribute[] getAttributes(APIElement api)
 {
     Attribute[] attributes;
+
+    /++
+        If an Attribute is defined as
+        + Attribute (User)
+        only its name is stored in a dictionary, not an array
+    +/
+    if(api.jsonElement.type != JSON_TYPE.ARRAY)
+    {
+        if("element" in api.jsonElement)
+            attributes ~= Attribute(nextID++, api.jsonElement["element"].str, api.jsonElement["element"].str);
+
+        return attributes;
+    }
+
     // TODO add support for default values
     foreach(APIElement attribute; api.getChildrenByElementType(ElementType.Member))
     {
@@ -132,6 +146,7 @@ Request[] getRequests(APIElement api)
     {
         string jsonExample = "";
         string description = "";
+        Attribute[] attributes;
 
         auto requestContent = request.content;      // contains description and assets
 
@@ -146,8 +161,12 @@ Request[] getRequests(APIElement api)
         if(requestDescription)
             description = requestDescription.contentstr;
 
+        APIElement attributeElement = requestContent.findFirstElement(ElementType.Attribute);
+        if(attributeElement)
+            attributes = getAttributes(attributeElement.content);
 
-        requests ~= Request(nextID++, jsonExample, description);
+
+        requests ~= Request(nextID++, jsonExample, description, attributes);
     }
 
     return requests;
@@ -212,6 +231,7 @@ Resource[] getResources(APIElement api)
         auto url = resource.getContentOrEmptyString(["attributes", "href"]);
         auto description = resource.description;
         Attribute[] attributes;
+        GETParameter[] getParameters;
 
         auto actions = getActions(resource.content);
 
@@ -223,7 +243,11 @@ Resource[] getResources(APIElement api)
                 attributes = getAttributes(attributeElements);
         }
 
-        resources ~= Resource(nextID++, title, url, description, actions, attributes);
+        APIElement hrefVariables = resource.getAPIElementOrNull(["attributes", "hrefVarialbes", "content"]);
+        if(hrefVariables)
+            getParameters = getGETParameters(hrefVariables);
+
+        resources ~= Resource(nextID++, title, url, description, actions, attributes, getParameters);
     }
 
     return resources;
