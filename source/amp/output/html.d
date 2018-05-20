@@ -39,6 +39,7 @@ import std.array : appender;
 import std.path : buildPath;
 import std.stdio : File;
 
+import amp.apiwrappers;
 import amp.parser;
 import amp.output.generic;
 import mustache;
