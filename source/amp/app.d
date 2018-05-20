@@ -51,7 +51,7 @@ int runCLI(string[] args)
     GetoptResult rgetopt = getopt(
         args,
         config.passThrough,
-        "version|w", "Display the version of this program", &optPrintVersionInfo
+        "version|v", "Display the version of this program", &optPrintVersionInfo
     );
 
     if (rgetopt.helpWanted)
@@ -93,6 +93,7 @@ int runCLI(string[] args)
     {
         // File
         ParserResult r = parseBlueprint(path);
+        renderParserResult(r, "source/html_template");
     }
 
     return 0;
@@ -105,4 +106,3 @@ void printVersionInfo()
 {
     writeln("AMP v", import("version.txt"));
 }
-
