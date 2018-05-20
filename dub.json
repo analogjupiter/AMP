@@ -3,7 +3,7 @@
     "description": "API Markup Processor",
 
     "copyright": "Copyright © 2018  0xEAB",
-    "license": "AGPL-3.0",
+    "license": "AGPL-3.0 or later",
 
     "authors": [
         "Manuel Kirchner (R3Vid)",
