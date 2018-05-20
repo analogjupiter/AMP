@@ -49,7 +49,7 @@ enum HTTPMethod{
 
 struct Attribute
 {
-    string id;
+    int id;
     string name;
     string dataType;
     string description;
@@ -57,7 +57,7 @@ struct Attribute
 
 struct GETParameter
 {
-    string id;
+    int id;
     string name;
     string dataType;
     string description;
@@ -66,14 +66,14 @@ struct GETParameter
 
 struct Request
 {
-    string id;
+    int id;
     string jsonExample;
     string description;
 }
 
 struct Response
 {
-    string id;
+    int id;
     string jsonExample;
     string description;
 
@@ -87,7 +87,7 @@ struct Response
 +/
 struct Action
 {
-    string id;
+    int id;
     string title;
     string description;
     string httpMethod;
@@ -136,7 +136,7 @@ struct Action
 
 struct Resource
 {
-    string id;
+    int id;
     string title;
     string url;
     string description;
@@ -171,7 +171,7 @@ struct Resource
 
 struct Group
 {
-    string id;
+    int id;
     string title;
     string description;
 
@@ -196,7 +196,7 @@ struct Group
 
 struct APIRoot
 {
-    string id;      // ids are strings for readability in the template
+    int id;      // ids are strings for readability in the template
     string title;
     string description;
 

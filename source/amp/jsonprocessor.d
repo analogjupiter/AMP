@@ -26,6 +26,8 @@ import std.stdio;
 import std.json;
 import std.conv : to;
 
+int nextID = 0;
+
 /++
     Input: List of members containing attributes
     Location: Resource -> content -> datastructure -> content
@@ -50,7 +52,7 @@ Attribute[] getAttributes(APIElement api)
             }
         }
 
-        attributes ~= Attribute(name, dataType, description);
+        attributes ~= Attribute(nextID++, name, dataType, description);
     }
 
     return attributes;
@@ -79,7 +81,7 @@ GETParameter[] getGETParameters(APIElement api)
 
         bool isRequired = constraint != "optional";
 
-        params ~= GETParameter(name, dataType, description, isRequired);
+        params ~= GETParameter(nextID++, name, dataType, description, isRequired);
     }
 
     return params;
@@ -112,7 +114,7 @@ Response[] getResponses(APIElement api)
         string statusCodeStr = response.getContentOrEmptyString(["attributes", "statusCode"]);
         int status = statusCodeStr == "" ? 0 : to!int(statusCodeStr);
 
-        responses ~= Response(jsonExample, description, status);
+        responses ~= Response(nextID++, jsonExample, description, status);
     }
 
     return responses;
@@ -145,7 +147,7 @@ Request[] getRequests(APIElement api)
             description = requestDescription.contentstr;
 
 
-        requests ~= Request(jsonExample, description);
+        requests ~= Request(nextID++, jsonExample, description);
     }
 
     return requests;
@@ -194,7 +196,7 @@ Action[] getActions(APIElement api)
             responses = getResponses(transaction.content);
         }
 
-        actions ~= Action(title, description, httpMethod, requests, responses, getParameters, attributes);
+        actions ~= Action(nextID++, title, description, httpMethod, requests, responses, getParameters, attributes);
     }
 
     return actions;
@@ -221,7 +223,7 @@ Resource[] getResources(APIElement api)
                 attributes = getAttributes(attributeElements);
         }
 
-        resources ~= Resource(title, url, description, actions, attributes);
+        resources ~= Resource(nextID++, title, url, description, actions, attributes);
     }
 
     return resources;
@@ -238,7 +240,7 @@ Group[] getGroups(APIElement api)
     {
         if(group.jsonElement["meta"]["classes"]["content"][0]["content"].str == ElementType.ResourceGroup)
         {
-            groups ~= Group(group.title, group.description, getResources(group.content));
+            groups ~= Group(nextID++, group.title, group.description, getResources(group.content));
         }
     }
 
@@ -259,7 +261,7 @@ APIRoot getAPIRoot(JSONValue json)
     auto title = api.title;
     auto description = api.description;
 
-    return APIRoot(title, description, getGroups(api.content));
+    return APIRoot(nextID++, title, description, getGroups(api.content));
 }
 
 /++
