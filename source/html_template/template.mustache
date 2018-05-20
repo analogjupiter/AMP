@@ -108,7 +108,7 @@
           <div class="http-method-badge get">
             {{httpMethod}}
           </div>
-          <p class="url">http://www.xyz.com/<span class="url-action">notes</span>/
+          <p class="url">{{url}}/<span class="url-action">notes</span>/
           </p>
         </div>
 
@@ -127,7 +127,7 @@
               <tr>
                 <td class="name"><span>{{name}}</span></td>
                 <td>
-                  <span class="required">{{isRequired}}</span>  <!-- TODO change to string -->
+                  <span class="required">{{#isRequired}}req{{/isRequired}}{{^isRequired}}opt{{/isRequired}}</span>  <!-- TODO change to string -->
                 </td>
                 <td>
                   <span class="datatype">{{dataType}}</span>
