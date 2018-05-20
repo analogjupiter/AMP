@@ -243,7 +243,7 @@ Resource[] getResources(APIElement api)
                 attributes = getAttributes(attributeElements);
         }
 
-        APIElement hrefVariables = resource.getAPIElementOrNull(["attributes", "hrefVarialbes", "content"]);
+        APIElement hrefVariables = resource.getAPIElementOrNull(["attributes", "hrefVariables", "content"]);
         if(hrefVariables)
             getParameters = getGETParameters(hrefVariables);
 

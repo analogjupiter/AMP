@@ -166,6 +166,16 @@
                     attributeContext["description"] = attribute.description;
                 }
 
+                foreach(GETParameter param; resource.getParameters)
+                {
+                    auto paramContext = resourceContext.addSubContext("resourceGetParameters");
+                    paramContext["id"] = param.id;
+                    paramContext["name"] = param.name;
+                    paramContext["dataType"] = param.dataType;
+                    paramContext["description"] = param.description;
+                    paramContext["isRequired"] = param.isRequired;
+                }
+
             }
          }
      }
