@@ -1,0 +1,179 @@
+@import 'settings';
+@import 'foundation';
+
+.machine-section {
+  padding: 0 1.5em;
+  background-color: $ms-bg;
+  color: white;
+  height: 100vh;
+  overflow-y: scroll;
+
+  .seperator {
+    border-top: 1px solid $ms-seperator-color;
+    margin-top: 3em;
+  }
+
+  .variable-table tr{
+    border-color: $ms-seperator-color;
+  }
+
+  .block-description {
+    color: map-get($description-colors, machine-section);
+  }
+
+  h3 {
+    color: white;
+  }
+
+  @include breakpoint(medium down) {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    width: 100vw;
+  }
+}
+
+.ms-head {
+  display: flex;
+  padding-top: 1em;
+  padding-bottom: 1em;
+  border-bottom: 1px solid $ms-seperator-color;
+
+  .closeMsButton {
+    color: white;
+    width: 1em;
+    &:hover {
+      cursor: pointer;
+      color: #ddd;
+    }
+  }
+
+  .ms-heading {
+    margin-top: 0;
+    margin-left:1em;
+  }
+}
+
+.ms-url {
+  display: flex;
+  margin-bottom: 1.5em;;
+  padding: 1em 0;
+  border-bottom: 1px solid $ms-seperator-color;
+
+  font-family: monospace;
+  font-size: 1.2em;
+
+  .url {
+    margin-top: 0;
+    margin-bottom: 0;
+    margin-left: 1.5em;
+    padding-top: .2em;
+
+    .url-action {
+      font-weight: bold;
+    }
+
+    .url-parameter {
+      font-weight: bold;
+      color: map-get($colors, orange);
+    }
+
+  }
+}
+
+.machine-section .attributes,
+.machine-section .parameters {
+  tbody, tr {
+    background-color: transparent;
+  }
+}
+
+.hide {
+  display: none;
+}
+
+.response .heading {
+  display: flex;
+  align-items: center;
+
+  .message-code {
+    margin-left: 2em;
+  }
+}
+
+.message-code {
+  font-family: monospace;
+  font-size: 1.2em;
+
+  .code {
+    background-color: white;
+    padding: .3em .5em;
+    color: white;
+    font-weight: bold;
+  }
+
+  &.information {
+    .code {
+      background-color: map-get($message-code-colors, information);
+    }
+    .status {
+      color: map-get($message-code-colors, information);
+    }
+  }
+
+  &.success {
+    .code {
+      background-color: map-get($message-code-colors, success);
+    }
+    .status {
+      color: map-get($message-code-colors, success);
+    }
+  }
+
+  &.redirect {
+    .code {
+      background-color: map-get($message-code-colors, redirect);
+    }
+    .status {
+      color: map-get($message-code-colors, redirect);
+    }
+  }
+
+  &.client-error {
+    .code {
+      background-color: map-get($message-code-colors, client-error);
+    }
+    .status {
+      color: map-get($message-code-colors, client-error);
+    }
+  }
+
+  &.server-error {
+    .code {
+      background-color: map-get($message-code-colors, server-error);
+    }
+    .status {
+      color: map-get($message-code-colors, server-error);
+    }
+  }
+}
+
+.json {
+  font-family: monospace;
+  font-size: 1.1em;
+  padding: .3em .5em;
+  background-color: lighten($ms-bg, 5);
+
+  .text {
+    color: map-get($json-colors, text);
+  }
+
+  .key {
+    color: map-get($json-colors, key);
+  }
+
+  .nr {
+    color: map-get($json-colors, number);
+  }
+}

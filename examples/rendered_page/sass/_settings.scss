@@ -1,0 +1,60 @@
+$font-size: (
+  h1: 2.5em,
+  h2: 1.75em,
+  h3: 1.75em,
+  h4: 1em,
+  h5: 1em
+);
+
+
+$colors: (
+  red: #D91E18,
+  orange: #E87E04,
+  yellow: #F7CA18,
+  green: #2baf3b,
+  blue: #1E8BC3,
+  middle-blue: #0c658c,
+  dark-blue: #013243,
+  purple: #947CB0,
+  light-grey: #95A5A6,
+);
+
+$action-hover-color: #eee;
+
+$table-border-color: #aaa;
+$table-row-border-color: #eee;
+
+$seperator-color: #ccc;
+
+$ms-bg: #1f2227;
+$ms-seperator-color: #444;
+
+$description-colors: (
+  human-section: #666,
+  machine-section: #aaa
+);
+
+$method-colors: (
+  get: map-get($colors, green),
+  post: map-get($colors, blue),
+  patch: map-get($colors, orange),
+  put: map-get($colors, purple),
+  delete: map-get($colors, red)
+);
+
+$message-code-colors: (
+  information: map-get($colors, light-grey),
+  success: map-get($colors, green),
+  redirect: map-get($colors, yellow),
+  client-error: map-get($colors, red),
+  server-error: map-get($colors, orange)
+);
+
+$json-colors: (
+  text: lighten(map-get($colors, light-grey), 10),
+  number: map-get($colors, yellow),
+  key: map-get($colors, purple)
+);
+
+$accordionmenu-arrow-color: #333;
+$accordionmenu-nested-margin: .2em;
