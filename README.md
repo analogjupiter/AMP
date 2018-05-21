@@ -7,8 +7,8 @@ It aims to be partially compatible with [API Blueprint](https://apiblueprint.org
 ## Installation
 
 1. Install [Drafter v4](https://github.com/apiaryio/drafter) (just stick to its docs)
-
-2. ```sh
+2.
+```sh
 # Clone this repository and navigate into it:
 git clone --recurse-submodules https://github.com/voidblaster/AMP.git
 cd AMP
