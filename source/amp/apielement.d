@@ -20,6 +20,7 @@ module amp.apielement;
 
 import std.stdio;
 import std.json;
+import std.conv : to;
 
 enum ElementType{
     Group = "category",
@@ -63,11 +64,16 @@ class APIElement
         }
 
         /++
-            Returns the content as string
+            Returns the content as string (if it is an integer or a string)
             If the content is not a string, an empty string is returned
         +/
         string contentstr()
         {
+            if("element" in jsonElement)
+            {
+                if(jsonElement["element"].str == "number")
+                    return jsonElement["content"].integer.to!string;
+            }
             if("content" in jsonElement)
                 return jsonElement["content"].str;
             else

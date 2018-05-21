@@ -64,10 +64,15 @@
                   <tbody>
                     {{#attributes}}
                     <tr>
-                      <td class="name">body</td>
+                      <td class="name">{{name}}</td>
                       <td>
                         <span class="datatype">{{dataType}}</span>
+                      </td>
+                      <td>
                         <span class="description">{{description}}</span>
+                      </td>
+                      <td>
+                         <span class="default-value">- {{defaultValue}}</span> 
                       </td>
                     </tr>
                     {{/attributes}}
