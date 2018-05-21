@@ -5,7 +5,7 @@ It aims to be partially compatible with [API Blueprint](https://apiblueprint.org
 
 ## Installation
 
-1. Install [Drafter](https://github.com/apiaryio/drafter) (just stick to its docs)
+1. Install [Drafter v4](https://github.com/apiaryio/drafter) (just stick to its docs)
 2. Clone this repository and compile AMP using DUB:
 ```sh
 git clone https://github.com/voidblaster/AMP.git
