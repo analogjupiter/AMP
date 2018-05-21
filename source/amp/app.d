@@ -80,6 +80,11 @@ int runCLI(string[] args)
         return 0;
     }
 
+    if (optUseStdout)
+    {
+        optUseStderr = true;
+    }
+
     // Blueprint path passed?
     if (args.length < 2)
     {
@@ -210,7 +215,7 @@ int runCLI(string[] args)
     else
     {
         // File
-        File drafterLog = (optUseStderr || optUseStdout) ? stderr : File(outputPathAndBaseName ~ ".drafterlog", "w");
+        File drafterLog = (optUseStdout) ? stderr : File(outputPathAndBaseName ~ ".drafterlog", "w");
 
         ParserResult r = path.parseBlueprint(drafterLog);
         auto html = new HTMLAPIDocsOutput(optTemplateDirectory);
