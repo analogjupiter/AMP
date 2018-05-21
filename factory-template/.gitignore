@@ -1,7 +1,0 @@
-node_modules/
-package-lock.json
-
-# Keep those (since nobody will want to compile 'em themselves):
-# js/
-# css/
-
