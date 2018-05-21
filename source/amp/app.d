@@ -89,7 +89,7 @@ int runCLI(string[] args)
     if (args.length < 2)
     {
         // no
-        stderr.writeln("\033[1;31mError: No blueprint path specified");
+        stderr.writeln("\033[1;31mError: No blueprint path specified\033[39;49m");
         return 1;
     }
 
@@ -103,7 +103,7 @@ int runCLI(string[] args)
         if (!optTemplateDirectory.buildPath(TemplateFileNameFull).exists)
         {
             // no
-            stderr.writeln("\033[1;31mError: Factory template is missing; please specify a template directory.");
+            stderr.writeln("\033[1;31mError: Factory template is missing; please specify a template directory.\033[39;49m");
             return 1;
         }
     }
@@ -121,7 +121,7 @@ int runCLI(string[] args)
         if (args.length < 3)
         {
             // no
-            stderr.writeln("\033[1;31mError: No output directory specified");
+            stderr.writeln("\033[1;31mError: No output directory specified\033[39;49m");
             return 1;
         }
 
@@ -134,7 +134,7 @@ int runCLI(string[] args)
         if (!optForceOverride && outputPath.exists)
         {
             // yes
-            stderr.writeln("\033[1;31mError: Output file already exists. Use --force to override.");
+            stderr.writeln("\033[1;31mError: Output file already exists. Use --force to override.\033[39;49m");
             return 1;
         }
 
@@ -150,7 +150,7 @@ int runCLI(string[] args)
         if (!outputDir.isDir)
         {
             // the so-called directory is actually something else (probably an existing file)
-            stderr.writeln("\033[1;31mError: The specified output directory is actually something else");
+            stderr.writeln("\033[1;31mError: The specified output directory is actually something else\033[39;49m");
             return 1;
         }
 
@@ -196,7 +196,7 @@ int runCLI(string[] args)
     // Verify path
     if (!exists(path))
     {
-        stderr.writeln("\033[1;31mError: Non-existant blueprint path (" ~ path ~ ")");
+        stderr.writeln("\033[1;31mError: Non-existant blueprint path (" ~ path ~ ")\033[39;49m");
         return 1;
     }
 
