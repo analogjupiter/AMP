@@ -107,6 +107,11 @@
   display: none;
 }
 
+/* heading for response and request in machine-section */
+.heading {
+    border-bottom: 1px solid #5c5c5c;
+}
+
 /* line 96, ../sass/machine-section.scss */
 .response .heading {
   display: flex;

@@ -120,8 +120,8 @@
         </p>
 
         <div class="seperator"></div>
-
-        <div class="parameters">        <!-- TODO delete this section, if no params exist -->
+        {{#hasGETParameters}}
+        <div class="parameters">
           <h4>Parameters</h4>
           <table class="unstriped variable-table">
             <tbody>
@@ -145,7 +145,7 @@
               {{#resourceGetParameters}}
               <tr>
                 <td class="name"><span>{{name}}</span></td>
-                <td>
+                <td>{{isRequired}}
                   <span class="required">{{#isRequired}}req{{/isRequired}}{{^isRequired}}opt{{/isRequired}}</span>  <!-- TODO change to string -->
                 </td>
                 <td>
@@ -162,10 +162,11 @@
             </tbody>
           </table>
         </div>
-
         <div class="seperator"></div>
+        {{/hasGETParameters}}
 
-        <div class="attributes">            <!-- TODO do not show this section if no attributes exist -->
+        {{#hasAttributes}}
+        <div class="attributes">
           <h4>Attributes</h4>
           <table class="unstriped variable-table">
             <tbody>
@@ -188,9 +189,14 @@
         </div>
 
         <div class="seperator"></div>
+
+        {{/hasAttributes}}
+
         {{#requests}}
         <div class="request">
-          <h4>Request</h4>
+          <div class="heading">
+            <h4>Request</h4>
+          </div>
 
           <div class="message-headers">
             <h5>Headers</h5>

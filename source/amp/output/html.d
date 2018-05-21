@@ -155,6 +155,14 @@ Mustache.Context createContext(APIRoot api)
                 actionContext["description"] = action.description;
                 actionContext["httpMethod"] = action.httpMethod;
 
+                // This is a workaround because the boolean values are not rendered as defined (they are always false)
+                // Empty lists get renedered once.
+                if(action.getParameters.length > 0)
+                    auto temp = actionContext.addSubContext("hasGETParameters");
+
+                if(action.attributes.length > 0)
+                    auto temp = actionContext.addSubContext("hasAttributes");
+
                 foreach(Request request; action.requests)
                 {
                     auto requestContext = actionContext.addSubContext("requests");
