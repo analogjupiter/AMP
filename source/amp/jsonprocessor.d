@@ -49,7 +49,6 @@ Attribute[] getAttributes(APIElement api)
         return attributes;
     }
 
-    // TODO add support for default values
     foreach(APIElement attribute; api.getChildrenByElementType(ElementType.Member))
     {
         string description = attribute.getContentOrEmptyString(["meta", "description"]);
@@ -82,7 +81,6 @@ Attribute[] getAttributes(APIElement api)
 GETParameter[] getGETParameters(APIElement api)
 {
     GETParameter[] params;
-    // TODO implement support for default values
 
     foreach(APIElement param; api.getChildrenByElementType(ElementType.Member))
     {
@@ -265,7 +263,7 @@ Resource[] getResources(APIElement api)
 /++
     Returns all groups found within the first level of the jsonTree
     Location in JSON: category -> content -> category with the class (->meta->classes->content->content) resourceGroup
-    Input: category -> content
+    Input: The content of an APIRoot
 +/
 Group[] getGroups(APIElement api)
 {
@@ -289,7 +287,7 @@ Group[] getGroups(APIElement api)
 APIRoot getAPIRoot(JSONValue json)
 {
     if(json["element"].str != "category")
-        writeln("Root element not found!");
+        stderr.writeln("Root element not found!");
 
     APIElement api = new APIElement(json);
 
@@ -301,6 +299,7 @@ APIRoot getAPIRoot(JSONValue json)
 
 /++
     Converts the provided JSON into an APIRoot object
+    TODO resolve global Attribute references
 +/
 APIRoot process(JSONValue json)
 {
