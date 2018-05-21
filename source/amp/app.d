@@ -51,18 +51,18 @@ import amp.output.html;
 int runCLI(string[] args)
 {
     bool optForceOverride;
-    bool optUseStdout;
     string optTemplateDirectory;
     bool optPrintVersionInfo;
-    bool optPrintDrafterLog;
+    bool optUseStderr;
+    bool optUseStdout;
 
     // dfmt off
     GetoptResult rgetopt = getopt(
         args,
         config.passThrough,
         "force|f", "Force override output file.", &optForceOverride,
-        "stdout", "Use stdout instead of an output file.", &optUseStdout,
-        "print-log|p", "Print drafter log instead of writing it to a file.", &optPrintDrafterLog,
+        "stderr", "Redirect logs to stderr", &optUseStderr,
+        "stdout", "Use stdout instead of an output file. (Implies --stderr)", &optUseStdout,
         "templates|t", "Specifiy a custom template directory.", &optTemplateDirectory,
         "version|w", "Display the version of this program.", &optPrintVersionInfo
     );
@@ -177,7 +177,7 @@ int runCLI(string[] args)
             else if (!e.isDir)
             {
                 // log
-                stderr.writeln("\033[1;33mSkipping copying of template member `", e[(optTemplateDirectory.length + 1) .. $], "`");
+                stderr.writeln("\033[1;33mSkipping copying of template member `", e[(optTemplateDirectory.length + 1) .. $], "`\033[39;49m");
             }
         }
     }
@@ -210,8 +210,7 @@ int runCLI(string[] args)
     else
     {
         // File
-        stderr.writeln("\033[39;34m\nDrafter Log:");
-        File drafterLog = (optUseStdout || optPrintDrafterLog) ? stderr : File(outputPathAndBaseName ~ ".drafterlog", "w");
+        File drafterLog = (optUseStderr || optUseStdout) ? stderr : File(outputPathAndBaseName ~ ".drafterlog", "w");
 
         ParserResult r = path.parseBlueprint(drafterLog);
         auto html = new HTMLAPIDocsOutput(optTemplateDirectory);
