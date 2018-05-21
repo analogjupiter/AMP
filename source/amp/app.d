@@ -64,7 +64,7 @@ int runCLI(string[] args)
         "stdout", "Use stdout instead of an output file.", &optUseStdout,
         "print-log|p", "Print drafter log instead of writing it to a file.", &optPrintDrafterLog,
         "templates|t", "Specifiy a custom template directory.", &optTemplateDirectory,
-        "version|v", "Display the version of this program.", &optPrintVersionInfo
+        "version|w", "Display the version of this program.", &optPrintVersionInfo
     );
     // dfmt on
 
