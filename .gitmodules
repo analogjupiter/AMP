@@ -1,0 +1,3 @@
+[submodule "factory-template"]
+	path = factory-template
+	url = https://github.com/MarkusLei22/AMP-Template.git
