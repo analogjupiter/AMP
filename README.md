@@ -31,7 +31,7 @@ bin/amp --help
 
 ## Dependencies
 
--[AMP Factory Template](https://github.com/MarkusLei22/AMP-Template)
+- [AMP Factory Template](https://github.com/MarkusLei22/AMP-Template)
     - (c) Markus Leimer
     - License: CC-BY-4.0
     - Used as template for HTML files.
