@@ -54,7 +54,7 @@ int runCLI(string[] args)
     bool optUseStdout;
     string optTemplateDirectory;
     bool optPrintVersionInfo;
-
+    bool optPrintDrafterLog;
 
     // dfmt off
     GetoptResult rgetopt = getopt(
@@ -62,8 +62,9 @@ int runCLI(string[] args)
         config.passThrough,
         "force|f", "Force override output file.", &optForceOverride,
         "stdout", "Use stdout instead of an output file.", &optUseStdout,
+        "print-log|p", "Print drafter log instead of writing it to a file.", &optPrintDrafterLog,
         "templates|t", "Specifiy a custom template directory.", &optTemplateDirectory,
-        "version|w", "Display the version of this program.", &optPrintVersionInfo
+        "version|v", "Display the version of this program.", &optPrintVersionInfo
     );
     // dfmt on
 
@@ -210,7 +211,7 @@ int runCLI(string[] args)
     {
         // File
 
-        File drafterLog = (optUseStdout) ? stderr : File(outputPathAndBaseName ~ ".drafterlog", "w");
+        File drafterLog = (optUseStdout || optPrintDrafterLog) ? stderr : File(outputPathAndBaseName ~ ".drafterlog", "w");
 
         ParserResult r = path.parseBlueprint(drafterLog);
         auto html = new HTMLAPIDocsOutput(optTemplateDirectory);
@@ -227,4 +228,3 @@ void printVersionInfo()
 {
     writeln("AMP v", import("version.txt"));
 }
-
