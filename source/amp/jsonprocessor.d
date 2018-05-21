@@ -66,7 +66,9 @@ Attribute[] getAttributes(APIElement api)
             }
         }
 
-        attributes ~= Attribute(nextID++, name, dataType, description);
+        string defaultValue = attribute.getContentOrEmptyString(["content", "value"]);
+
+        attributes ~= Attribute(nextID++, name, dataType, description, defaultValue);
     }
 
     return attributes;
@@ -95,7 +97,9 @@ GETParameter[] getGETParameters(APIElement api)
 
         bool isRequired = constraint != "optional";
 
-        params ~= GETParameter(nextID++, name, dataType, description, isRequired);
+        string defaultValue = param.getContentOrEmptyString(["content", "value", "attributes", "default"]);
+
+        params ~= GETParameter(nextID++, name, dataType, description, isRequired, defaultValue);
     }
 
     return params;
@@ -221,6 +225,11 @@ Action[] getActions(APIElement api)
     return actions;
 }
 
+
+/++
+    Returns all Resources found within a Group
+    Expects the content of a Group as input
++/
 Resource[] getResources(APIElement api)
 {
     Resource[] resources;
@@ -255,6 +264,8 @@ Resource[] getResources(APIElement api)
 
 /++
     Returns all groups found within the first level of the jsonTree
+    Location in JSON: category -> content -> category with the class (->meta->classes->content->content) resourceGroup
+    Input: category -> content
 +/
 Group[] getGroups(APIElement api)
 {

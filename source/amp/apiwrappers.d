@@ -53,6 +53,7 @@ struct Attribute
     string name;
     string dataType;
     string description;
+    string defaultValue;
 }
 
 struct GETParameter
@@ -62,6 +63,7 @@ struct GETParameter
     string dataType;
     string description;
     bool isRequired;
+    string defaultValue;
 }
 
 struct Request
@@ -199,7 +201,7 @@ struct Group
 
 struct APIRoot
 {
-    int id;      // ids are strings for readability in the template
+    int id;
     string title;
     string description;
 

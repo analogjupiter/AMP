@@ -102,6 +102,7 @@ final @safe:
      +/
     public this(string templatePath)
     {
+        this._mustache.level = Mustache.CacheLevel.no;
         this._mustache.path = templatePath;
     }
 
@@ -179,6 +180,7 @@ Mustache.Context createContext(APIRoot api)
                     paramContext["dataType"] = param.dataType;
                     paramContext["description"] = param.description;
                     paramContext["isRequired"] = param.isRequired;
+                    paramContext["defaultValue"] = param.defaultValue;
                 }
 
                 foreach(Attribute attribute; action.attributes)
@@ -188,6 +190,7 @@ Mustache.Context createContext(APIRoot api)
                     attributeContext["name"] = attribute.name;
                     attributeContext["dataType"] = attribute.dataType;
                     attributeContext["description"] = attribute.description;
+                    attributeContext["defaultValue"] = attribute.defaultValue;
                 }
             }
 
@@ -198,6 +201,7 @@ Mustache.Context createContext(APIRoot api)
                 attributeContext["name"] = attribute.name;
                 attributeContext["dataType"] = attribute.dataType;
                 attributeContext["description"] = attribute.description;
+                attributeContext["defaultValue"] = attribute.defaultValue;
             }
 
             foreach(GETParameter param; resource.getParameters)
@@ -208,6 +212,7 @@ Mustache.Context createContext(APIRoot api)
                 paramContext["dataType"] = param.dataType;
                 paramContext["description"] = param.description;
                 paramContext["isRequired"] = param.isRequired;
+                paramContext["defaultValue"] = param.defaultValue;
             }
         }
     }

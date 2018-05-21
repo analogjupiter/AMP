@@ -138,7 +138,7 @@
                   <span class="description">{{description}}</span>
                 </td>
                 <td>
-                  <span class="default-value">-</span>  <!-- TODO support default values -->
+                  <span class="default-value">- {{defaultValue}}</span>
                 </td>
               </tr>
               {{/getParameters}}
@@ -155,7 +155,7 @@
                   <span class="description">{{description}}</span>
                 </td>
                 <td>
-                  <span class="default-value">-</span>  <!-- TODO support default values -->
+                  <span class="default-value">- {{defaultValue}}</span>
                 </td>
               </tr>
               {{/resourceGetParameters}}
@@ -174,7 +174,12 @@
                 <td class="name">{{name}}</td>
                 <td>
                   <span class="datatype">{{dataType}}</span>
+                </td>
+                <td>
                   <span class="description">{{description}}</span>
+                </td>
+                <td>
+                  <span class="default-value">- {{defaultValue}}</span>     <!-- TODO fix formatting -->
                 </td>
               </tr>
               {{/attributes}}
