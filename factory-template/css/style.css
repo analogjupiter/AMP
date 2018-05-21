@@ -13,15 +13,15 @@
 /* line 4, ../sass/machine-section.scss */
 .machine-section {
   padding: 0 1.5em;
-  background-color: #1f2227;
+  background-color: #282f3a;
   color: white;
   height: 100vh;
   overflow-y: scroll;
 }
 /* line 11, ../sass/machine-section.scss */
 .machine-section .seperator {
-  border-top: 1px solid #444;
-  margin-top: 3em;
+  /*border-top: 1px solid #aaa; /* 444 */
+  margin-top: 2em;
 }
 /* line 16, ../sass/machine-section.scss */
 .machine-section .variable-table tr {
@@ -174,8 +174,8 @@
 .json {
   font-family: monospace;
   font-size: 1.1em;
-  padding: .3em .5em;
-  background-color: #2a2e35;
+  padding: 0em .5em;
+  /*background-color: #22252b;*/
 }
 /* line 168, ../sass/machine-section.scss */
 .json .text {
@@ -3998,12 +3998,14 @@ h3 {
 /* line 30, ../sass/style.scss */
 h4 {
   font-size: 1em;
-  text-transform: uppercase;
+  /*text-transform: uppercase;*/
+  margin-bottom: 0em;
 }
 
 /* line 35, ../sass/style.scss */
 h5 {
   font-size: 1em;
+  margin-bottom: 0em;
 }
 
 /* line 40, ../sass/style.scss */
@@ -4054,13 +4056,13 @@ h5 {
 
 /* line 83, ../sass/style.scss */
 .variable-table {
-  border-top: 1px solid #aaa;
-  border-bottom: 1px solid #aaa;
+  /*border-top: 1px solid #aaa;
+  border-bottom: 1px solid #aaa;*/
 }
 /* line 87, ../sass/style.scss */
 .variable-table tr:last-child {
-  border-top: 1px solid #aaa;
-  border-bottom: 1px solid #aaa;
+  /*border-top: 1px solid #aaa;
+  border-bottom: 1px solid #aaa;*/
 }
 /* line 92, ../sass/style.scss */
 .variable-table tbody {
