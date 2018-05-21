@@ -210,7 +210,7 @@ int runCLI(string[] args)
     else
     {
         // File
-
+        stderr.writeln("\033[39;34m\nDrafter Log:");
         File drafterLog = (optUseStdout || optPrintDrafterLog) ? stderr : File(outputPathAndBaseName ~ ".drafterlog", "w");
 
         ParserResult r = path.parseBlueprint(drafterLog);
