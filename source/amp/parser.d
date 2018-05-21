@@ -37,7 +37,6 @@ module amp.parser;
 
 import amp.jsonprocessor;
 import amp.apiwrappers;
-import amp.output.htmlrenderer;
 
 import std.conv : to;
 import std.file : read;
@@ -88,13 +87,4 @@ ParserResult parseBlueprint(string filePath)
     //writeln(api.to!(string));
 
     return r;
-}
-
-/++
-    templatePath must be a directory containt a template.mustache file!
-+/
-deprecated void renderParserResult(ParserResult result, string templatePath)
-{
-    HTMLRenderer renderer = new HTMLRenderer(result.api, templatePath);
-    renderer.render("template");
 }
