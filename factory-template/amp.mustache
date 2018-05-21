@@ -10,12 +10,12 @@
     <div class="grid-x grid-margin-x">
       <div class="cell medium-3 large-2 hide" id="toc">
         <h4>Table of Contents</h4>
-        <ul class="vertical menu accordion-menu" data-accordion-menu data-submenu-toggle="true">
+        <ul class="vertical menu">
           {{#groups}}
           <li>
 
             <a href="#group-{{id}}" class="toc-group">{{title}}</a>
-            <ul class="menu vertical nested">
+            <ul  class="vertical menu accordion-menu" data-accordion-menu data-submenu-toggle="true">
 
               {{#resources}}
               <li>
@@ -72,7 +72,7 @@
                         <span class="description">{{description}}</span>
                       </td>
                       <td>
-                         <span class="default-value">- {{defaultValue}}</span> 
+                         <span class="default-value">- {{defaultValue}}</span>
                       </td>
                     </tr>
                     {{/attributes}}
