@@ -57,6 +57,11 @@ struct ParserResult
     string filePath;
 
     APIRoot api;
+
+    void opOpAssign(string op : "~")(ParserResult r2)
+    {
+        this.api ~= r2.api;
+    }
 }
 
 /++
@@ -88,7 +93,7 @@ ParserResult parseBlueprint(string filePath)
 /++
     templatePath must be a directory containt a template.mustache file!
 +/
-void renderParserResult(ParserResult result, string templatePath)
+deprecated void renderParserResult(ParserResult result, string templatePath)
 {
     HTMLRenderer renderer = new HTMLRenderer(result.api, templatePath);
     renderer.render("template");

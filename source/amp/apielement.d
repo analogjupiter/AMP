@@ -17,6 +17,7 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
  +/
 module amp.apielement;
+
 import std.stdio;
 import std.json;
 
@@ -36,7 +37,7 @@ enum ElementType{
 
 /++
     Abstraction of a JSONValue representing an Element from the parse result
-+/
+ +/
 class APIElement
 {
     JSONValue jsonElement;

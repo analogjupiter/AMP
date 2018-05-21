@@ -35,9 +35,11 @@
  +/
 module amp.app;
 
-import std.file : exists, isDir, mkdirRecurse, thisExePath;
+import std.algorithm.iteration : filter;
+import std.algorithm.searching : startsWith;
+import std.file : copy, dirEntries, DirEntry, exists, isDir, mkdirRecurse, SpanMode, thisExePath;
 import std.getopt;
-import std.path : buildPath, dirName;
+import std.path : baseName, buildPath, dirName, stripExtension;
 import std.stdio;
 
 import amp.parser;
@@ -48,14 +50,19 @@ import amp.output.html;
  +/
 int runCLI(string[] args)
 {
-    bool optPrintVersionInfo;
-    string optOutputDirectory;
+    bool optForceOverride;
+    bool optUseStdout;
     string optTemplateDirectory;
+    string optOutputDirectory;
+    bool optPrintVersionInfo;
+
 
     // dfmt off
     GetoptResult rgetopt = getopt(
         args,
         config.passThrough,
+        "force|f", "Force override output file.", &optForceOverride,
+        "stdout", "Use stdout instead of an output file.", &optUseStdout,
         "templates|t", "Specifiy a custom template directory.", &optTemplateDirectory,
         "version|w", "Display the version of this program.", &optPrintVersionInfo
     );
@@ -77,55 +84,133 @@ int runCLI(string[] args)
     if (args.length < 2)
     {
         // no
-        stderr.writeln("Error: No blueprint path specified");
+        stderr.writeln("\033[1;31mError: No blueprint path specified");
         return 1;
     }
 
-    // Output directory specified?
-    if (args.length < 3)
+    // No template directory specified?
+    if (optTemplateDirectory is null)
     {
-        // no
-        stderr.writeln("Error: No output directory specified");
-        return 1;
+        // Just use factory template
+        optTemplateDirectory = thisExePath.dirName.buildPath("..", "factory-template");
+
+        // Can the factory template be found?
+        if (!optTemplateDirectory.buildPath(TemplateFileNameFull).exists)
+        {
+            // no
+            stderr.writeln("\033[1;31mError: Factory template is missing; please specify a template directory.");
+            return 1;
+        }
     }
 
-    string path = args[$-2];
-    string output = args[$-1];
+    string path;
+    File output;
+
+    // Use stdout for output?
+    if (!optUseStdout)
+    {
+        // no (file instead)
+
+        // Output directory specified?
+        if (args.length < 3)
+        {
+            // no
+            stderr.writeln("\033[1;31mError: No output directory specified");
+            return 1;
+        }
+
+        path = args[$ - 2];
+        string outputDir = args[$ - 1];
+        string outputPath = outputDir.buildPath(path.baseName.stripExtension ~ ".html");
+
+        // Does the output file already exists and should not be overriden?
+        if (!optForceOverride && outputPath.exists)
+        {
+            // yes
+            stderr.writeln("\033[1;31mError: Output file already exists. Use --force to override.");
+            return 1;
+        }
+
+        // Does the output directory exist?
+        if (!outputDir.exists)
+        {
+            // no
+            // so let's create it
+            outputDir.mkdirRecurse();
+        }
+
+        // Verify directory
+        if (!outputDir.isDir)
+        {
+            // the so-called directory is actually something else (probably an existing file)
+            stderr.writeln("\033[1;31mError: The specified output directory is actually something else");
+            return 1;
+        }
+
+        output = File(outputPath, "w");
+
+        // Copy template-related files into output directory
+        foreach(DirEntry e; optTemplateDirectory.dirEntries(SpanMode.breadth))
+        {
+            // Don't copy hidden files
+            if (e.baseName.startsWith('.'))
+            {
+                continue;
+            }
+
+            string target = outputDir.buildPath(e[(optTemplateDirectory.length + 1) .. $]);
+
+            // Don't override already existing files
+            if (!target.exists)
+            {
+                if (e.isDir)
+                {
+                    target.mkdirRecurse();
+                }
+                else
+                {
+                    e.copy(target);
+                }
+            }
+            else if (!e.isDir)
+            {
+                // log
+                stderr.writeln("\033[1;33mSkipping copying of template member `", e[(optTemplateDirectory.length + 1) .. $], "`");
+            }
+        }
+    }
+    else
+    {
+        // yes (stdout)
+        path = args[$ - 1];
+        output = stdout;
+    }
 
     // Verify path
     if (!exists(path))
     {
-        stderr.writeln("Error: Non-existant blueprint path (" ~ path ~ ")");
+        stderr.writeln("\033[1;31mError: Non-existant blueprint path (" ~ path ~ ")");
         return 1;
     }
 
-    // Check output directory
-    if (!exists(output))
-    {
-        mkdirRecurse(output);
-    }
-    else if (!isDir(output))
-    {
-        stderr.writeln("Error: The specified output directory is not a directory (" ~ output ~ ")");
-        return 1;
-    }
-
-    if (optTemplateDirectory is null)
-    {
-        optTemplateDirectory = buildPath(dirName(thisExePath), "factory-templates");
-    }
-
-    // Determine path type (dir or file)
-    if (isDir(path))
+    // Determine input path type (dir or file)
+    if (path.isDir)
     {
         // Directory
-        assert(0, "Not implemented");
+        auto files = path.dirEntries("*.apib", SpanMode.shallow).filter!(a => a.isFile);
+
+        if (!files.empty)
+        {
+            // concat before parsing (because of Drafter)
+            assert(0, "Not implemented yet.");
+        }
     }
     else
     {
         // File
-        ParserResult r = parseBlueprint(path);
-        renderParserResult(r, "source/html_template");
+        ParserResult r = path.parseBlueprint;
+        auto html = new HTMLAPIDocsOutput(optTemplateDirectory);
+        html.write(r, output);
     }
 
     return 0;

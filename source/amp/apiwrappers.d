@@ -205,6 +205,11 @@ struct APIRoot
 
     Group[] groups;
 
+    void opOpAssign(string op : "~")(APIRoot a2)
+    {
+        assert(0, "Not implemented yet");
+    }
+
     string toString()
     {
         auto app = appender!string;

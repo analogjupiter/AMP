@@ -44,26 +44,24 @@ import amp.parser;
 import amp.output.generic;
 import mustache;
 
-/++
-    Filenames of the templates used by HTMLAMPOutput
- +/
-enum TemplateFileNames : string
+enum TemplateFileName = "amp";
+enum TemplateFileExt = Mustache.Option().ext;
+enum TemplateFileNameFull = TemplateFileName ~ '.' ~ TemplateFileExt;
+
+private
 {
-    index = "index",
-    group = "group"
+    alias Mustache = MustacheEngine!string;
 }
 
-enum HtmlExt = "html";
-enum DotHtmlExt = '.' ~ HtmlExt;
-
+/++
+    Mustache template based HTML output
+ +/
 class HTMLAPIDocsOutput : APIDocsOutput
 {
 final @safe:
 
     private
     {
-        alias Mustache = MustacheEngine!string;
-
         Mustache _mustache;
     }
 
@@ -93,6 +91,7 @@ final @safe:
             /++ ditto +/
             void templatePath(string value)
             {
+                this._mustache.ext = TemplateFileExt;
                 this._mustache.path = value;
             }
         }
@@ -109,27 +108,109 @@ final @safe:
     public @system
     {
         /++
-            Converts the API def to HTML and saves it on disk
+            Converts the API def to HTML
          +/
-        void write(ParserResult pr, string targetDirectory)
+        pragma(inline, true)
+        void write(ParserResult pr, File target)
         {
-            auto ctxIndex = new Mustache.Context;
-
-            foreach(group; pr.api.groups)
-            {
-                this.writeGroup(group, targetDirectory);
-            }
-        }
-
-        void writeGroup(Group group, string targetDirectory)
-        {
-            auto ctxGroup = new Mustache.Context;
-
-            auto f = File(buildPath(targetDirectory, group.title ~ DotHtmlExt), "w");
-            scope(exit) f.close();
-
-            f.rawWrite(this._mustache.render(TemplateFileNames.group, ctxGroup));
+            target.rawWrite(mustache.render(TemplateFileName, pr.api.createContext));
         }
     }
 }
 
+/++
+    Creates a Mustache context for the passed API def
+
+    TODO: make this less disgusting (-.-)
+ +/
+Mustache.Context createContext(APIRoot api)
+{
+    auto context = new Mustache.Context;
+
+    context["id"] = api.id;
+    context["title"] = api.title;
+    context["description"] = api.description;
+
+    foreach(Group group; api.groups)
+    {
+        auto groupContext = context.addSubContext("groups");
+        groupContext["id"] = group.id;
+        groupContext["title"] = group.title;
+        groupContext["description"] = group.description;
+
+        foreach(Resource resource; group.resources)
+        {
+            auto resourceContext = groupContext.addSubContext("resources");
+            resourceContext["id"] = resource.id;
+            resourceContext["title"] = resource.title;
+            resourceContext["url"] = resource.url;
+            resourceContext["description"] = resource.description;
+
+            foreach(Action action; resource.actions)
+            {
+                auto actionContext = resourceContext.addSubContext("actions");
+                actionContext["id"] = action.id;
+                actionContext["title"] = action.title;
+                actionContext["description"] = action.description;
+                actionContext["httpMethod"] = action.httpMethod;
+
+                foreach(Request request; action.requests)
+                {
+                    auto requestContext = actionContext.addSubContext("requests");
+                    requestContext["id"] = request.id;
+                    requestContext["jsonExample"] = request.jsonExample;
+                    requestContext["description"] = request.description;
+                }
+
+                foreach(Response response; action.responses)
+                {
+                    auto responseContext = actionContext.addSubContext("responses");
+                    responseContext["id"] = response.id;
+                    responseContext["jsonExample"] = response.jsonExample;
+                    responseContext["description"] = response.description;
+                    responseContext["httpStatusCode"] = response.httpStatusCode;
+                }
+
+                foreach(GETParameter param; action.getParameters)
+                {
+                    auto paramContext = actionContext.addSubContext("getParameters");
+                    paramContext["id"] = param.id;
+                    paramContext["name"] = param.name;
+                    paramContext["dataType"] = param.dataType;
+                    paramContext["description"] = param.description;
+                    paramContext["isRequired"] = param.isRequired;
+                }
+
+                foreach(Attribute attribute; action.attributes)
+                {
+                    auto attributeContext = actionContext.addSubContext("attributes");
+                    attributeContext["id"] = attribute.id;
+                    attributeContext["name"] = attribute.name;
+                    attributeContext["dataType"] = attribute.dataType;
+                    attributeContext["description"] = attribute.description;
+                }
+            }
+
+            foreach(Attribute attribute; resource.attributes)
+            {
+                auto attributeContext = resourceContext.addSubContext("attributes");
+                attributeContext["id"] = attribute.id;
+                attributeContext["name"] = attribute.name;
+                attributeContext["dataType"] = attribute.dataType;
+                attributeContext["description"] = attribute.description;
+            }
+
+            foreach(GETParameter param; resource.getParameters)
+            {
+                auto paramContext = resourceContext.addSubContext("resourceGetParameters");
+                paramContext["id"] = param.id;
+                paramContext["name"] = param.name;
+                paramContext["dataType"] = param.dataType;
+                paramContext["description"] = param.description;
+                paramContext["isRequired"] = param.isRequired;
+            }
+        }
+    }
+
+    return context;
+}

@@ -40,5 +40,5 @@ import std.stdio : File;
 
 interface APIDocsOutput
 {
-    void write(ParserResult parserResult, string targetDirectory);
+    void write(ParserResult parserResult, File target);
 }
