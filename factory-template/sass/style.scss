@@ -29,11 +29,12 @@ h3 {
 
 h4 {
   font-size: map-get($font-size, h4);
-  text-transform: uppercase;
+  margin-bottom: 0;
 }
 
 h5 {
   font-size: map-get($font-size, h5);
+  margin-bottom: 0;
 }
 
 
@@ -81,13 +82,6 @@ h5 {
 }
 
 .variable-table {
-  border-top: 1px solid $table-border-color;
-  border-bottom: 1px solid $table-border-color;
-
-  tr:last-child {
-    border-top: 1px solid $table-border-color;
-    border-bottom: 1px solid $table-border-color;
-  }
 
   tbody {
     border: none;
