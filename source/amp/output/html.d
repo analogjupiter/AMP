@@ -111,7 +111,6 @@ final @safe:
         /++
             Converts the API def to HTML
          +/
-        pragma(inline, true)
         void write(ParserResult pr, File target)
         {
             target.rawWrite(mustache.render(TemplateFileName, pr.api.createContext));
