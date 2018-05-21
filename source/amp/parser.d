@@ -38,15 +38,15 @@ module amp.parser;
 import amp.jsonprocessor;
 import amp.apiwrappers;
 
+import std.algorithm.mutation : copy;
 import std.conv : to;
 import std.file : read;
 import std.json;
 import std.process;
 import std.stdio;
 
-
 /++
-    Parsed blueprint
+    Parsed API def
  +/
 struct ParserResult
 {
@@ -66,7 +66,7 @@ struct ParserResult
 /++
     Parses a blueprint file
  +/
-ParserResult parseBlueprint(string filePath)
+ParserResult parseBlueprint(string filePath, File drafterLog)
 {
     auto r = ParserResult();
     r.filePath = filePath;
@@ -78,13 +78,10 @@ ParserResult parseBlueprint(string filePath)
     char[] jsonText = new char[1000000];
     jsonText = pipes.stdout.rawRead(jsonText);
 
-    char[] errorText = new char[1000000];
-    errorText = pipes.stderr.rawRead(errorText);
+    pipes.stderr.LockingTextReader.copy(drafterLog.lockingTextWriter);
 
     JSONValue json = parseJSON(jsonText);
     r.api = process(json);
-
-    //writeln(api.to!(string));
 
     return r;
 }

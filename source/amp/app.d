@@ -53,7 +53,6 @@ int runCLI(string[] args)
     bool optForceOverride;
     bool optUseStdout;
     string optTemplateDirectory;
-    string optOutputDirectory;
     bool optPrintVersionInfo;
 
 
@@ -105,6 +104,7 @@ int runCLI(string[] args)
 
     string path;
     File output;
+    string outputPathAndBaseName;
 
     // Use stdout for output?
     if (!optUseStdout)
@@ -120,8 +120,9 @@ int runCLI(string[] args)
         }
 
         path = args[$ - 2];
-        string outputDir = args[$ - 1];
-        string outputPath = outputDir.buildPath(path.baseName.stripExtension ~ ".html");
+        immutable string outputDir = args[$ - 1];
+        outputPathAndBaseName = outputDir.buildPath(path.baseName.stripExtension);
+        immutable string outputPath = outputPathAndBaseName ~ ".html";
 
         // Does the output file already exists and should not be overriden?
         if (!optForceOverride && outputPath.exists)
@@ -208,7 +209,10 @@ int runCLI(string[] args)
     else
     {
         // File
-        ParserResult r = path.parseBlueprint;
+
+        File drafterLog = (optUseStdout) ? stderr : File(outputPathAndBaseName ~ ".drafterlog", "w");
+
+        ParserResult r = path.parseBlueprint(drafterLog);
         auto html = new HTMLAPIDocsOutput(optTemplateDirectory);
         html.write(r, output);
     }
