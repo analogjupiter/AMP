@@ -157,7 +157,7 @@ Mustache.Context createContext(APIRoot api)
 
                 // This is a workaround because the boolean values are not rendered as defined (they are always false)
                 // Empty lists get renedered once.
-                if(action.getParameters.length > 0)
+                if(action.getParameters.length > 0 || resource.getParameters.length > 0)
                     auto temp = actionContext.addSubContext("hasGETParameters");
 
                 if(action.attributes.length > 0)
