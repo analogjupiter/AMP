@@ -38,7 +38,7 @@ module amp.output.html;
 import std.array : appender;
 import std.path : buildPath;
 import std.stdio : File;
-
+import std.string;
 import amp.apiwrappers;
 import amp.parser;
 import amp.output.generic;
@@ -153,6 +153,7 @@ Mustache.Context createContext(APIRoot api)
                 actionContext["title"] = action.title;
                 actionContext["description"] = action.description;
                 actionContext["httpMethod"] = action.httpMethod;
+                actionContext["httpMethodClass"] = action.httpMethod.toLower;   // used for css classes
 
                 // This is a workaround because the boolean values are not rendered as defined (they are always false)
                 // Empty lists get renedered once.
