@@ -278,7 +278,7 @@ string[] getApibPaths(string path)
         apibPath =  buildPath(path, apibPath);
 
         // The line is not empty
-        if(apibPath.length > 0)
+        if(apibPath.length > path.length)
         {
             if(exists(apibPath) && !apibPath.isDir)
             {
