@@ -40,7 +40,7 @@ import amp.apiwrappers;
 
 import std.algorithm.mutation : copy;
 import std.conv : to;
-import std.file : read;
+import std.file : read, readText;
 import std.json;
 import std.process;
 import std.stdio;
@@ -64,14 +64,18 @@ struct ParserResult
 }
 
 /++
-    Parses a blueprint file
+    Parses a blueprint string
  +/
-ParserResult parseBlueprint(string filePath, File drafterLog)
+ParserResult parseBlueprint(string blueprint, File drafterLog)
 {
     auto r = ParserResult();
-    r.filePath = filePath;
+    r.filePath = "deprecated";
 
-    ProcessPipes pipes = pipeProcess(["drafter", "-f",  "json", filePath], Redirect.stdout | Redirect.stderr);
+    ProcessPipes pipes = pipeProcess(["drafter", "-u", "-f",  "json"], Redirect.all);
+
+    pipes.stdin.write(blueprint);
+    pipes.stdin.flush();
+    pipes.stdin.close();
     scope(exit) wait(pipes.pid);
 
     //TODO implement dynamic buffer size

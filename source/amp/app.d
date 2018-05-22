@@ -37,13 +37,16 @@ module amp.app;
 
 import std.algorithm.iteration : filter;
 import std.algorithm.searching : startsWith;
-import std.file : copy, dirEntries, DirEntry, exists, isDir, mkdirRecurse, SpanMode, thisExePath;
+import std.file : readText, copy, dirEntries, DirEntry, exists, isDir, mkdirRecurse, SpanMode, thisExePath;
 import std.getopt;
 import std.path : baseName, buildPath, dirName, stripExtension;
 import std.stdio;
+import std.array : split, appender;
 
 import amp.parser;
 import amp.output.html;
+
+enum ConfigFile = "amp.config";
 
 /++
     Launches AMP in command-line mode
@@ -55,6 +58,7 @@ int runCLI(string[] args)
     bool optPrintVersionInfo;
     bool optUseStderr;
     bool optUseStdout;
+    string blueprint;
 
     // dfmt off
     GetoptResult rgetopt = getopt(
@@ -203,24 +207,43 @@ int runCLI(string[] args)
     // Determine input path type (dir or file)
     if (path.isDir)
     {
-        // Directory
-        auto files = path.dirEntries("*.apib", SpanMode.shallow).filter!(a => a.isFile);
+        string configPath = buildPath(path, ConfigFile);
 
-        if (!files.empty)
+        if(!exists(configPath))
         {
-            // concat before parsing (because of Drafter)
-            assert(0, "Not implemented yet.");
+            stderr.writeln("\033[1;31mError:
+If you are using a directory, define a config file (amp.config) in it.
+The config file should contain paths to all .apib files that you want to use.
+The files will be concatenated in the specified sequence.\033[39;49m");
+            return 1;
+        }
+
+        auto blueprintAppender = appender!string;
+
+        foreach(string apibPath; getApibPaths(path))
+        {
+            blueprintAppender ~= readText(apibPath);
+
+        }
+
+        blueprint = blueprintAppender.data;
+
+        if(blueprint.length == 0)
+        {
+            stderr.writeln("Warning: the blueprint is empty!");
+            return 0;
         }
     }
     else
     {
-        // File
-        File drafterLog = (optUseStdout) ? stderr : File(outputPathAndBaseName ~ ".drafterlog", "w");
-
-        ParserResult r = path.parseBlueprint(drafterLog);
-        auto html = new HTMLAPIDocsOutput(optTemplateDirectory);
-        html.write(r, output);
+        blueprint = readText(path);
     }
+
+    // File
+    File drafterLog = (optUseStdout) ? stderr : File(outputPathAndBaseName ~ ".drafterlog", "w");
+    ParserResult r = blueprint.parseBlueprint(drafterLog);
+    auto html = new HTMLAPIDocsOutput(optTemplateDirectory);
+    html.write(r, output);
 
     return 0;
 }
@@ -231,4 +254,38 @@ int runCLI(string[] args)
 void printVersionInfo()
 {
     writeln("AMP v", import("version.txt"));
+}
+
+/++
+    Reads the paths from the config file
+    and returns all paths that exist
++/
+string[] getApibPaths(string path)
+{
+    string[] validPaths;
+
+    string configPath = buildPath(path, ConfigFile);
+
+    string text = readText(configPath);
+    string[] apibPaths = text.split('\n');
+
+    foreach(string apibPath; apibPaths)
+    {
+        apibPath =  buildPath(path, apibPath);
+
+        // The line is not empty
+        if(apibPath.length > 0)
+        {
+            if(exists(apibPath) && !apibPath.isDir)
+            {
+                validPaths ~= apibPath;
+            }
+            else
+            {
+                stderr.writeln("Warning: Ignored path (not found): (" ~ apibPath ~ ")");
+            }
+        }
+    }
+
+    return validPaths;
 }
