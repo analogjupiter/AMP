@@ -96,6 +96,7 @@ struct Action
     string title;
     string description;
     string httpMethod;
+    string url;
 
     Request[] requests;
     Response[] responses;

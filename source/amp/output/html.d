@@ -154,6 +154,11 @@ Mustache.Context createContext(APIRoot api)
                 actionContext["description"] = action.description;
                 actionContext["httpMethod"] = action.httpMethod;
                 actionContext["httpMethodClass"] = action.httpMethod.toLower;   // used for css classes
+                if(action.url.length > 0)
+                    actionContext["actionUrl"] = action.url;
+                else
+                    actionContext["actionUrl"] = resource.url;
+
 
                 // This is a workaround because the boolean values are not rendered as defined (they are always false)
                 // Empty lists get renedered once.

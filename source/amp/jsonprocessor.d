@@ -187,6 +187,7 @@ Action[] getActions(APIElement api)
         auto title = action.title;
         auto description = action.description;
         auto httpMethod = "";
+        auto url = "";
         Request[] requests;
         Response[] responses;
         GETParameter[] getParameters;
@@ -195,6 +196,10 @@ Action[] getActions(APIElement api)
         APIElement parameters = action.getAPIElementOrNull(["attributes", "hrefVariables", "content"]);
         if(parameters)
             getParameters = getGETParameters(parameters);
+
+        APIElement href = action.getAPIElementOrNull(["attributes", "href"]);
+        if(href)
+            url = href.contentstr;
 
         APIElement attributeElements = action.getAPIElementOrNull(["attributes", "data", "content", "content"]);
         if(attributeElements)
@@ -217,9 +222,10 @@ Action[] getActions(APIElement api)
             responses = getResponses(transaction.content);
         }
 
-        actions ~= Action(nextID++, title, description, httpMethod, requests, responses, getParameters, attributes);
+        actions ~= Action(nextID++, title, description, httpMethod, url, requests, responses, getParameters, attributes);
     }
-
+    foreach(Action action; actions)
+        writeln("--" ~ action.url);
     return actions;
 }
 
