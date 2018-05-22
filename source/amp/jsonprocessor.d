@@ -224,8 +224,7 @@ Action[] getActions(APIElement api)
 
         actions ~= Action(nextID++, title, description, httpMethod, url, requests, responses, getParameters, attributes);
     }
-    foreach(Action action; actions)
-        writeln("--" ~ action.url);
+
     return actions;
 }
 
