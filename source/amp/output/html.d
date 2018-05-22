@@ -192,7 +192,8 @@ Mustache.Context createContext(APIRoot api)
                     paramContext["name"] = param.name;
                     paramContext["dataType"] = param.dataType;
                     paramContext["description"] = param.description;
-                    paramContext["isRequired"] = param.isRequired;
+                    if(param.isRequired)
+                        auto temp = paramContext.addSubContext("isRequired");
                     paramContext["defaultValue"] = param.defaultValue;
                 }
 
@@ -224,7 +225,8 @@ Mustache.Context createContext(APIRoot api)
                 paramContext["name"] = param.name;
                 paramContext["dataType"] = param.dataType;
                 paramContext["description"] = param.description;
-                paramContext["isRequired"] = param.isRequired;
+                if(param.isRequired)
+                    auto temp = paramContext.addSubContext("isRequired");
                 paramContext["defaultValue"] = param.defaultValue;
             }
         }
