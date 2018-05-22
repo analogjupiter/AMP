@@ -65,7 +65,7 @@ int runCLI(string[] args)
         args,
         config.passThrough,
         "force|f", "Force override output file.", &optForceOverride,
-        "stderr", "Redirect logs to stderr", &optUseStderr,
+        "stderr", "Redirect drafter logs to stderr", &optUseStderr,
         "stdout", "Use stdout instead of an output file. (Implies --stderr)", &optUseStdout,
         "templates|t", "Specifiy a custom template directory.", &optTemplateDirectory,
         "version|w", "Display the version of this program.", &optPrintVersionInfo
@@ -120,6 +120,7 @@ int runCLI(string[] args)
     if (!optUseStdout)
     {
         // no (file instead)
+        // Create directory if it does not exist and copy template files
 
         // Output directory specified?
         if (args.length < 3)
@@ -205,13 +206,16 @@ int runCLI(string[] args)
     }
 
     // Determine input path type (dir or file)
+    // And read blueprint
     if (path.isDir)
     {
+        // Read config file and concat all files specified in it
+
         string configPath = buildPath(path, ConfigFile);
 
         if(!exists(configPath))
         {
-            stderr.writeln("\033[1;31mError:
+            stderr.writeln("\033[1;31mError: config file not found (" ~ configPath ~ ")
 If you are using a directory, define a config file (amp.config) in it.
 The config file should contain paths to all .apib files that you want to use.
 The files will be concatenated in the specified sequence.\033[39;49m");
@@ -227,20 +231,20 @@ The files will be concatenated in the specified sequence.\033[39;49m");
         }
 
         blueprint = blueprintAppender.data;
-
-        if(blueprint.length == 0)
-        {
-            stderr.writeln("Warning: the blueprint is empty!");
-            return 0;
-        }
     }
     else
     {
         blueprint = readText(path);
     }
 
-    // File
-    File drafterLog = (optUseStdout) ? stderr : File(outputPathAndBaseName ~ ".drafterlog", "w");
+    // parse and render the blueprint
+    if(blueprint.length == 0)
+    {
+        stderr.writeln("Warning: the blueprint is empty!");
+        return 0;
+    }
+
+    File drafterLog = (optUseStderr) ? stderr : File(outputPathAndBaseName ~ ".drafterlog", "w");
     ParserResult r = blueprint.parseBlueprint(drafterLog);
     auto html = new HTMLAPIDocsOutput(optTemplateDirectory);
     html.write(r, output);
