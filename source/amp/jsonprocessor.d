@@ -206,10 +206,8 @@ Action[] getActions(APIElement api)
             attributes = getAttributes(attributeElements);
 
         // NOTE multiple transactions and mmultiple requests / responses within a transaction will not work
-        APIElement transaction = action.content;
-        transaction = transaction.findFirstElement(ElementType.Transaction);
-
-        if(transaction)
+        APIElement actionContent = action.content;      // contains the description and one or more http transactions (consistign of request & response)
+        foreach(APIElement transaction; actionContent.getChildrenByElementType(ElementType.Transaction))
         {
             APIElement transactionItems = transaction.content;
             APIElement requestElement = transactionItems.findFirstElement(ElementType.Request);
@@ -218,13 +216,19 @@ Action[] getActions(APIElement api)
             if(requestElement)
                 httpMethod = requestElement.getContentOrEmptyString(["attributes", "method"]);
 
-            requests = getRequests(transaction.content);
-            responses = getResponses(transaction.content);
+            /+ Ignore every but the first requests, because all further requests could be duplicates of the first one
+                TODO implement support for multiple requests
+                responses are just appended to the existing responses
+            +/
+            if(requests.length == 0)
+                requests = getRequests(transaction.content);
+            foreach(Response response; getResponses(transaction.content))       // every transaction should only contain response, but for safety it is assumed that multiple ones can be within it
+                responses ~= response;
         }
+
 
         actions ~= Action(nextID++, title, description, httpMethod, url, requests, responses, getParameters, attributes);
     }
-
     return actions;
 }
 
