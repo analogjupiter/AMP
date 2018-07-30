@@ -226,7 +226,7 @@ The files will be concatenated in the specified sequence.\033[39;49m");
 
         foreach(string apibPath; getApibPaths(path))
         {
-            blueprintAppender ~= readText(apibPath);
+            blueprintAppender ~= readText(apibPath);    // TODO add support for CRLF
 
         }
 
@@ -267,11 +267,11 @@ void printVersionInfo()
 string[] getApibPaths(string path)
 {
     string[] validPaths;
-
+    stderr.writeln("debug");
     string configPath = buildPath(path, ConfigFile);
 
     string text = readText(configPath);
-    string[] apibPaths = text.split('\n');
+    string[] apibPaths = splitLines(text);
 
     foreach(string apibPath; apibPaths)
     {
