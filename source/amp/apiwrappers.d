@@ -66,6 +66,13 @@ struct GETParameter
     string defaultValue;
 }
 
+struct DTO
+{
+    int id;
+    string jsonExample;
+    string description;
+}
+
 struct Request
 {
     int id;
@@ -73,6 +80,8 @@ struct Request
     string description;
 
     Attribute[] attributes;
+
+    string jsonSchema;
 }
 
 struct Response
@@ -81,8 +90,10 @@ struct Response
     string jsonExample;
     string description;
     int httpStatusCode;
-
+    string jsonSchema;
     Attribute[] attributes;
+
+
 }
 
 /++

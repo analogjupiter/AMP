@@ -41,6 +41,7 @@ import std.file : readText, copy, dirEntries, DirEntry, exists, isDir, mkdirRecu
 import std.getopt;
 import std.path : baseName, buildPath, dirName, stripExtension;
 import std.stdio;
+import std.string;
 import std.array : split, appender;
 
 import amp.parser;

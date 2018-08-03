@@ -183,6 +183,7 @@ Mustache.Context createContext(APIRoot api)
                     responseContext["jsonExample"] = response.jsonExample;
                     responseContext["description"] = response.description;
                     responseContext["httpStatusCode"] = response.httpStatusCode;
+                    responseContext["jsonSchema"] = response.jsonSchema;
                 }
 
                 foreach(GETParameter param; action.getParameters)

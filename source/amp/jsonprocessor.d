@@ -115,13 +115,18 @@ Response[] getResponses(APIElement api)
     {
         string jsonExample = "";
         string description = "";
+        string jsonSchema ="";
 
         auto responseContent = response.content;
 
         APIElement responseAsset = responseContent.findFirstElement(ElementType.Asset);
-        if(responseAsset)
+        if(responseAsset){
             jsonExample = responseAsset.content.jsonElement.str;
 
+            APIElement[] responseSchemaAsset = responseContent.getChildrenByElementType(ElementType.Asset);
+            if(responseSchemaAsset.length >= 2)
+            jsonSchema = responseSchemaAsset[1].contentstr;
+        }
 
         APIElement responseDescription = responseContent.findFirstElement(ElementType.Description);
         if(responseDescription)
@@ -130,7 +135,7 @@ Response[] getResponses(APIElement api)
         string statusCodeStr = response.getContentOrEmptyString(["attributes", "statusCode"]);
         int status = statusCodeStr == "" ? 0 : to!int(statusCodeStr);
 
-        responses ~= Response(nextID++, jsonExample, description, status);
+        responses ~= Response(nextID++, jsonExample, description, status, jsonSchema);
     }
 
     return responses;
