@@ -21,6 +21,7 @@ module amp.jsonprocessor;
 import amp.parser;
 import amp.apielement;
 import amp.apiwrappers;
+import amp.jsonpath;
 
 import std.stdio;
 import std.json;
@@ -28,44 +29,51 @@ import std.conv : to;
 
 int nextID = 0;
 
+const string TITLE_PATH = "meta.title.content";
+const string DESCRIPTION_PATH = "content[?element=copy].[0].content"; // can only be used when the description is saved in a "copy" element
+
 /++
     Input: List of members containing attributes
     Location: Resource -> content -> datastructure -> content
 +/
-Attribute[] getAttributes(APIElement api)
+Attribute[] getAttributes(JSONValue json)
 {
     Attribute[] attributes;
+
+    // avoid exceptions when the json is null
+    if(json.type == JSON_TYPE.NULL)
+        return attributes;
+
+    auto inputPath = new JSONPath(json);
 
     /++
         If an Attribute is defined as
         + Attribute (User)
         only its name is stored in a dictionary, not an array
     +/
-    if(api.jsonElement.type != JSON_TYPE.ARRAY)
+    if(json.type != JSON_TYPE.ARRAY)
     {
-        if("element" in api.jsonElement)
-            attributes ~= Attribute(nextID++, api.jsonElement["element"].str, api.jsonElement["element"].str);
+        if("element" in json)
+            attributes ~= Attribute(nextID++, json["element"].str, json["element"].str);
 
         return attributes;
     }
 
-    foreach(APIElement attribute; api.getChildrenByElementType(ElementType.Member))
+    // parse the attributes
+    foreach(JSONValue attribute; inputPath.parse("[?element=member]").array)
     {
-        string description = attribute.getContentOrEmptyString(["meta", "description"]);
-        string name = attribute.getAPIElementOrNull(["content", "key"]).contentstr;
-        string dataType = attribute.getAPIElementOrNull(["content", "value", "element"]).jsonElement.str;
+        auto path = new JSONPath(attribute);
+        string name = path.parseString("content.key.content");
+        string description = path.parseString("meta.description.content");
+        string defaultValue = path.parseString("content.value.content");
+        string dataType = path.parseString("content.value.element");
 
+        // if the datatype is an array, format the datatype like: [string]
         if(dataType == "array")
         {
-            auto arrayContent = attribute.getAPIElementOrNull(["content", "value", "content"]);
-            if(arrayContent)
-            {
-                auto arrayElement = arrayContent.jsonElement[0]["element"].str;
-                dataType ~= "[" ~ arrayElement ~"]";
-            }
+            auto arrayDataType =  path.parseString("content.value.content[0].element");
+            dataType ~= "[" ~ arrayDataType ~"]";
         }
-
-        string defaultValue = attribute.getContentOrEmptyString(["content", "value"]);
 
         attributes ~= Attribute(nextID++, name, dataType, description, defaultValue);
     }
@@ -78,24 +86,26 @@ Attribute[] getAttributes(APIElement api)
     Returns all GET parameters that are found at the top json level
     Expects content of hrefVarialbes
 +/
-GETParameter[] getGETParameters(APIElement api)
+GETParameter[] getGETParameters(JSONValue json)
 {
     GETParameter[] params;
 
-    foreach(APIElement param; api.getChildrenByElementType(ElementType.Member))
-    {
-        string name = param.getContentOrEmptyString(["content", "key"]);
-        string dataType = param.title;
-        string description = param.getContentOrEmptyString(["meta", "description"]);
-        string constraint = "";
+    if(json.type == JSON_TYPE.NULL)
+        return params;
 
-        APIElement constraintElements = param.getAPIElementOrNull(["attributes", "typeAttributes", "content"]);
-        if(constraintElements)
-            constraint = constraintElements.getChildrenByElementType("string")[0].contentstr;
+    auto inputPath = new JSONPath(json);
+
+    foreach(JSONValue param; inputPath.parse("[?element=member]").array)
+    {
+        auto path = new JSONPath(param);
+
+        string name = path.parseString("content.key.content");
+        string dataType = path.parseString(TITLE_PATH);
+        string description = path.parseString("meta.description.content");
+        string constraint = path.parseString("attributes.typeAttributes.content[?element=string].[0].content");
+        string defaultValue = path.parseString("content.value.attributes.default.content");
 
         bool isRequired = constraint != "optional";
-
-        string defaultValue = param.getContentOrEmptyString(["content", "value", "attributes", "default"]);
 
         params ~= GETParameter(nextID++, name, dataType, description, isRequired, defaultValue);
     }
@@ -107,32 +117,21 @@ GETParameter[] getGETParameters(APIElement api)
     Returns all Responses on the current json level
     Expects the content of a transaction as input
 +/
-Response[] getResponses(APIElement api)
+Response[] getResponses(JSONValue json)
 {
     Response[] responses;
+    auto inputPath = new JSONPath(json);
 
-    foreach(APIElement response; api.getChildrenByElementType(ElementType.Response))
+    foreach(JSONValue responsej; inputPath.parse("[?element=httpResponse]").array)
     {
-        string jsonExample = "";
-        string description = "";
-        string jsonSchema ="";
+        auto path = new JSONPath(responsej);
+        auto response = new APIElement(responsej);
 
-        auto responseContent = response.content;
+        string jsonExample = path.parseString("content[?element=asset].[0].content");
+        string description = path.parseString(DESCRIPTION_PATH);
+        string jsonSchema = path.parseString("content[?element=asset].[1].content");
+        string statusCodeStr = path.parseString("attributes.statusCode.content");
 
-        APIElement responseAsset = responseContent.findFirstElement(ElementType.Asset);
-        if(responseAsset){
-            jsonExample = responseAsset.content.jsonElement.str;
-
-            APIElement[] responseSchemaAsset = responseContent.getChildrenByElementType(ElementType.Asset);
-            if(responseSchemaAsset.length >= 2)
-            jsonSchema = responseSchemaAsset[1].contentstr;
-        }
-
-        APIElement responseDescription = responseContent.findFirstElement(ElementType.Description);
-        if(responseDescription)
-            description = responseDescription.contentstr;
-
-        string statusCodeStr = response.getContentOrEmptyString(["attributes", "statusCode"]);
         int status = statusCodeStr == "" ? 0 : to!int(statusCodeStr);
 
         responses ~= Response(nextID++, jsonExample, description, status, jsonSchema);
@@ -145,33 +144,22 @@ Response[] getResponses(APIElement api)
     Returns all Requests on the current json level
     Expects the content of a transaction as input
 +/
-Request[] getRequests(APIElement api)
+Request[] getRequests(JSONValue json)
 {
     Request[] requests;
 
-    foreach(APIElement request; api.getChildrenByElementType(ElementType.Request))
+    auto inputPath = new JSONPath(json);
+
+    foreach(JSONValue request; inputPath.parse("[?element=httpRequest]").array)
     {
-        string jsonExample = "";
-        string description = "";
-        Attribute[] attributes;
+        auto path = new JSONPath(request);
 
-        auto requestContent = request.content;      // contains description and assets
+        string jsonExample = path.parseString("content[?element=asset].[0].content");
+        string description = path.parseString(DESCRIPTION_PATH);
+        string jsonSchema = path.parseString("content[?element=asset].[1].content");
+        Attribute[] attributes = getAttributes(path.parse("content[?element=dataStructure].[0].content"));
 
-
-        // TODO add support for multiple assets
-        APIElement requestAsset = requestContent.findFirstElement(ElementType.Asset);
-        if(requestAsset)
-            jsonExample = requestAsset.content.jsonElement.str;
-
-
-        APIElement requestDescription = requestContent.findFirstElement(ElementType.Description);
-        if(requestDescription)
-            description = requestDescription.contentstr;
-
-        APIElement attributeElement = requestContent.findFirstElement(ElementType.Attribute);
-        if(attributeElement)
-            attributes = getAttributes(attributeElement.content);
-
+        // TODO add support for multiple assets (json examples)
 
         requests ~= Request(nextID++, jsonExample, description, attributes);
     }
@@ -180,57 +168,47 @@ Request[] getRequests(APIElement api)
 }
 
 /++
-    Returns all actions (HTTP methods) on the current json level
+    Returns all actions (HTTP methods) on the current json level;
+    actions are sequences of requests and responses
     Expects the content of a Resource as input
 +/
-Action[] getActions(APIElement api)
+Action[] getActions(JSONValue json)
 {
     Action[] actions;
 
-    foreach(APIElement action; api.getChildrenByElementType(ElementType.Action))
+    auto inputPath = new JSONPath(json);
+
+    // parse all actions and append them
+    foreach(JSONValue action; inputPath.parse("[?element=transition]").array)   // transition = "action"
     {
-        auto title = action.title;
-        auto description = action.description;
+        auto path = new JSONPath(action);
+
+        auto title = path.parseString(TITLE_PATH);
+        auto description = path.parseString(DESCRIPTION_PATH);
         auto httpMethod = "";
-        auto url = "";
+        auto url = path.parseString("attributes.href.content");
+
+        GETParameter[] getParameters = getGETParameters(path.parse("attributes.hrefVariables.content"));
+        Attribute[] attributes = getAttributes(path.parse("attributes.data.content.content"));
+
         Request[] requests;
         Response[] responses;
-        GETParameter[] getParameters;
-        Attribute[] attributes;
 
-        APIElement parameters = action.getAPIElementOrNull(["attributes", "hrefVariables", "content"]);
-        if(parameters)
-            getParameters = getGETParameters(parameters);
-
-        APIElement href = action.getAPIElementOrNull(["attributes", "href"]);
-        if(href)
-            url = href.contentstr;
-
-        APIElement attributeElements = action.getAPIElementOrNull(["attributes", "data", "content", "content"]);
-        if(attributeElements)
-            attributes = getAttributes(attributeElements);
-
-        // NOTE multiple transactions and mmultiple requests / responses within a transaction will not work
-        APIElement actionContent = action.content;      // contains the description and one or more http transactions (consistign of request & response)
-        foreach(APIElement transaction; actionContent.getChildrenByElementType(ElementType.Transaction))
+        // request response pairs are "httpTransactions" - here they get parsed
+        foreach(JSONValue transaction; path.parse("content[?element=httpTransaction]").array)
         {
-            APIElement transactionItems = transaction.content;
-            APIElement requestElement = transactionItems.findFirstElement(ElementType.Request);
+            auto transactionPath = new JSONPath(transaction);
 
-            // NOTE this technically belongs to the Request, not to the Action
-            if(requestElement)
-                httpMethod = requestElement.getContentOrEmptyString(["attributes", "method"]);
+            // the http method is extracted here, it belongs to a request in the JSON but we need it in the action
+            httpMethod = transactionPath.parseString("content[?element=httpRequest].[0].attributes.method.content");
 
-            /+ Ignore every but the first requests, because all further requests could be duplicates of the first one
-                TODO implement support for multiple requests
-                responses are just appended to the existing responses
-            +/
-            if(requests.length == 0)
-                requests = getRequests(transaction.content);
-            foreach(Response response; getResponses(transaction.content))       // every transaction should only contain response, but for safety it is assumed that multiple ones can be within it
+            if(requests.length == 0)    // avoid parsing the same request multiple times
+                requests = getRequests(transactionPath.parse("content"));
+
+            // get all responses
+            foreach(Response response; getResponses(transactionPath.parse("content")))
                 responses ~= response;
         }
-
 
         actions ~= Action(nextID++, title, description, httpMethod, url, requests, responses, getParameters, attributes);
     }
@@ -242,31 +220,23 @@ Action[] getActions(APIElement api)
     Returns all Resources found within a Group
     Expects the content of a Group as input
 +/
-Resource[] getResources(APIElement api)
+Resource[] getResources(JSONValue json)
 {
     Resource[] resources;
+    auto inputPath = new JSONPath(json);
 
-    foreach(APIElement resource; api.getChildrenByElementType(ElementType.Resource))
+    // parse each resource and append it to resources
+    foreach(JSONValue resource; inputPath.parse("[?element=resource]").array)
     {
-        auto title = resource.title;
-        auto url = resource.getContentOrEmptyString(["attributes", "href"]);
-        auto description = resource.description;
-        Attribute[] attributes;
-        GETParameter[] getParameters;
+        auto path = new JSONPath(resource);
 
-        auto actions = getActions(resource.content);
+        auto title = path.parseString(TITLE_PATH);
+        auto url = path.parseString("attributes.href.content");// resource.getContentOrEmptyString(["attributes", "href"]);
+        auto description = path.parseString(DESCRIPTION_PATH);
+        Attribute[] attributes = getAttributes(path.parse("content[?element=dataStructure].[0].content.content"));
+        auto actions = getActions(path.parse("content"));
 
-        APIElement dataStructure = resource.content.findFirstElement(ElementType.Attribute);
-        if(dataStructure)
-        {
-            auto attributeElements = dataStructure.getAPIElementOrNull(["content", "content"]);
-            if(attributeElements)
-                attributes = getAttributes(attributeElements);
-        }
-
-        APIElement hrefVariables = resource.getAPIElementOrNull(["attributes", "hrefVariables", "content"]);
-        if(hrefVariables)
-            getParameters = getGETParameters(hrefVariables);
+        GETParameter[] getParameters = getGETParameters(path.parse("attributes.hrefVariables.content"));
 
         resources ~= Resource(nextID++, title, url, description, actions, attributes, getParameters);
     }
@@ -279,15 +249,18 @@ Resource[] getResources(APIElement api)
     Location in JSON: category -> content -> category with the class (->meta->classes->content->content) resourceGroup
     Input: The content of an APIRoot
 +/
-Group[] getGroups(APIElement api)
+Group[] getGroups(JSONValue json)
 {
     Group[] groups;
 
-    foreach(APIElement group; api.getChildrenByElementType(ElementType.Group))
+    auto inputPath = new JSONPath(json);
+
+    foreach(JSONValue group; inputPath.parse("content[?element=category]").array)       // categories = groups
     {
-        if(group.jsonElement["meta"]["classes"]["content"][0]["content"].str == ElementType.ResourceGroup)
+        auto path = new JSONPath(group);
+        if(path.parseString("meta.classes.content[0].content") == ElementType.ResourceGroup)        // verify that the object is valid
         {
-            groups ~= Group(nextID++, group.title, group.description, getResources(group.content));
+            groups ~= Group(nextID++, path.parseString(TITLE_PATH),path.parseString(DESCRIPTION_PATH), getResources(path.parse("content")));
         }
     }
 
@@ -303,12 +276,12 @@ APIRoot getAPIRoot(JSONValue json)
     if(json["element"].str != "category")
         stderr.writeln("Root element not found!");
 
-    APIElement api = new APIElement(json);
+    auto path = new JSONPath(json);
 
-    auto title = api.title;
-    auto description = api.description;
+    auto title = path.parseString(TITLE_PATH);
+    auto description = path.parseString(DESCRIPTION_PATH);
 
-    return APIRoot(nextID++, title, description, getGroups(api.content));
+    return APIRoot(nextID++, title, description, getGroups(json));
 }
 
 /++

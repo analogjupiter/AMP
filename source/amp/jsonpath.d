@@ -57,65 +57,35 @@ class JSONPath
 
         JSONValue currentJsonValue = json;
 
+        Command[] commands;
+
         foreach(string property; propertyChain)
         {
-            if(property[0] == '*')
-            {
-                property = property[1 .. property.length];
-                JSONValue[] valuesWithPropertyName;
-                foreach(JSONValue val; currentJsonValue.array)
-                {
-                    writeln(property);
-                    writeln(val);
-                    if(val.type == JSON_TYPE.STRING)
-                    {
-                        if(val.str == property)
-                            valuesWithPropertyName ~= val;
-                    }
-                    else if(property in val)
-                        valuesWithPropertyName ~= val[property];
-                }
-                return JSONValue(valuesWithPropertyName);
-            }
-
             auto indexOfStartBracket = indexOf(property, '[');
 
-            // condition
-            if(property[indexOfStartBracket + 1] == '?')
+            if(indexOfStartBracket == -1)
+                currentJsonValue = new ObjectQueryCommand(currentJsonValue, property).execute();
+            else if(property[indexOfStartBracket + 1] == '?')
             {
                 string condition = property[indexOfStartBracket + 2 .. property.length-1];
                 string[] conditionParts = condition.split('=');
 
-                string smallProperty = property[0 .. indexOfStartBracket];
+                string propertyName = property[0 .. indexOfStartBracket];
+                currentJsonValue = new ObjectQueryCommand(currentJsonValue, propertyName).execute();
 
-                JSONValue[] valuesWithPropertyName;
-
-                foreach(JSONValue val; currentJsonValue[smallProperty].array)
-                {
-                    if(val[conditionParts[0]].str == conditionParts[1])
-                        valuesWithPropertyName ~= val;
-                }
-
-                return JSONValue(valuesWithPropertyName);
+                currentJsonValue = new ConditionCommand!string(currentJsonValue, new EqualityStrategy!string(), conditionParts[0], conditionParts[1]).execute();
             }
-            else if(indexOfStartBracket> -1)
+            else
             {
                 int propertyIndex = to!int(property[indexOfStartBracket + 1 .. property.length-1]);
                 property = property[0 .. indexOfStartBracket];
 
-                currentJsonValue = currentJsonValue[property][propertyIndex];
+                currentJsonValue = new ObjectQueryCommand(currentJsonValue, property).execute();
+                currentJsonValue = new ArrayQueryCommand(currentJsonValue, propertyIndex).execute();
             }
-            else
-            {
-                if(property in currentJsonValue)
-                currentJsonValue = currentJsonValue[property];
-                else
-                return JSONValue();
-            }
-
         }
-
         return currentJsonValue;
+
     }
 
     //TODO make generic
@@ -148,7 +118,9 @@ class ObjectQueryCommand : Command
 
     public JSONValue execute()
     {
-        if(property in json)
+        if(property == "")  // return the unchanged json, if the property is empty (enables support for .string[condition].[0])
+            return json;
+        if(json.type == JSON_TYPE.OBJECT && property in json)
             return json[property];
         else
             return JSONValue();
@@ -168,10 +140,12 @@ class ArrayQueryCommand : Command
 
     public JSONValue execute()
     {
-        if(json.type == JSON_TYPE.ARRAY)
+        if(json.type == JSON_TYPE.ARRAY && json.array.length > index)
         {
             return json[index];
         }
+        else if(index == 0)
+            return json;    // heuristic that, if the index is 0 and the json is not an array, that the contents are wanted
         else
             return JSONValue();
     }
@@ -201,7 +175,7 @@ class ConditionCommand(T) : Command
 
         foreach(JSONValue val; json.array)
         {
-            if(strategy.evaluate(val[comparisonPropertyName].str), desiredValue)    // TODO remove .str with a more generic conversion method
+            if(strategy.evaluate(val[comparisonPropertyName].str, desiredValue))    // TODO remove .str with a more generic conversion method
                 foundValues ~= val;
         }
 

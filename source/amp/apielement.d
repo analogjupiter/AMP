@@ -41,7 +41,7 @@ enum ElementType{
  +/
 class APIElement
 {
-    JSONValue jsonElement;
+    public JSONValue jsonElement;
 
     this(JSONValue jsonElement)
     {

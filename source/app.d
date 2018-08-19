@@ -40,4 +40,3 @@ int main(string[] args)
 {
 	return runCLI(args);
 }
-
