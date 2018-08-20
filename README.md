@@ -1,6 +1,6 @@
-# AMP - API Markup Processor
+# AMP - API Markdown Processor
 
-**AMP** is a free markup processor for API definitions.
+**AMP** is a free Markdown Processor for API definitions.
 It aims to be partially compatible with [API Blueprint](https://apiblueprint.org/).
 
 

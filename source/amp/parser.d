@@ -1,5 +1,5 @@
 ﻿/++
-    This file is part of AMP - API Markup Processor.
+    This file is part of AMP - API Markdown Processor.
     Copyright (c) 2018  R3Vid
     Copyright (c) 2018  0xEAB
 
