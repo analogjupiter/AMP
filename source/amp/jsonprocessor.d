@@ -161,7 +161,7 @@ Request[] getRequests(JSONValue json)
 
         // TODO add support for multiple assets (json examples)
 
-        requests ~= Request(nextID++, jsonExample, description, attributes);
+        requests ~= Request(nextID++, jsonExample, description, attributes, jsonSchema);
     }
 
     return requests;

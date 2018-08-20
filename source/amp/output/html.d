@@ -42,6 +42,7 @@ import std.string;
 import amp.apiwrappers;
 import amp.parser;
 import amp.output.generic;
+import amp.output.mustachecontextbuilder;
 import mustache;
 
 enum TemplateFileName = "amp";
@@ -113,125 +114,8 @@ final @safe:
          +/
         void write(ParserResult pr, File target)
         {
-            target.rawWrite(mustache.render(TemplateFileName, pr.api.createContext));
+            auto contextBuilder = new MustacheContextBuilder();
+            target.rawWrite(mustache.render(TemplateFileName, contextBuilder.getContext(pr.api)));
         }
     }
-}
-
-/++
-    Creates a Mustache context for the passed API def
-
-    TODO: make this less disgusting (-.-)
- +/
-Mustache.Context createContext(APIRoot api)
-{
-    auto context = new Mustache.Context;
-
-    context["id"] = api.id;
-    context["title"] = api.title;
-    context["description"] = api.description;
-
-    foreach(Group group; api.groups)
-    {
-        auto groupContext = context.addSubContext("groups");
-        groupContext["id"] = group.id;
-        groupContext["title"] = group.title;
-        groupContext["description"] = group.description;
-
-        foreach(Resource resource; group.resources)
-        {
-            auto resourceContext = groupContext.addSubContext("resources");
-            resourceContext["id"] = resource.id;
-            resourceContext["title"] = resource.title;
-            resourceContext["url"] = resource.url;
-            resourceContext["description"] = resource.description;
-
-            foreach(Action action; resource.actions)
-            {
-                auto actionContext = resourceContext.addSubContext("actions");
-                actionContext["id"] = action.id;
-                actionContext["title"] = action.title;
-                actionContext["description"] = action.description;
-                actionContext["httpMethod"] = action.httpMethod;
-                actionContext["httpMethodClass"] = action.httpMethod.toLower;   // used for css classes
-                if(action.url.length > 0)
-                    actionContext["actionUrl"] = action.url;
-                else
-                    actionContext["actionUrl"] = resource.url;
-
-
-                // This is a workaround because the boolean values are not rendered as defined (they are always false)
-                // Empty lists get renedered once.
-                if(action.getParameters.length > 0 || resource.getParameters.length > 0)
-                    auto temp = actionContext.addSubContext("hasGETParameters");
-
-                if(action.attributes.length > 0)
-                    auto temp = actionContext.addSubContext("hasAttributes");
-
-                foreach(Request request; action.requests)
-                {
-                    auto requestContext = actionContext.addSubContext("requests");
-                    requestContext["id"] = request.id;
-                    requestContext["jsonExample"] = request.jsonExample;
-                    requestContext["description"] = request.description;
-                }
-
-                foreach(Response response; action.responses)
-                {
-                    auto responseContext = actionContext.addSubContext("responses");
-                    responseContext["id"] = response.id;
-                    responseContext["jsonExample"] = response.jsonExample;
-                    responseContext["description"] = response.description;
-                    responseContext["httpStatusCode"] = response.httpStatusCode;
-                    responseContext["jsonSchema"] = response.jsonSchema;
-                }
-
-                foreach(GETParameter param; action.getParameters)
-                {
-                    auto paramContext = actionContext.addSubContext("getParameters");
-                    paramContext["id"] = param.id;
-                    paramContext["name"] = param.name;
-                    paramContext["dataType"] = param.dataType;
-                    paramContext["description"] = param.description;
-                    if(param.isRequired)
-                        auto temp = paramContext.addSubContext("isRequired");
-                    paramContext["defaultValue"] = param.defaultValue;
-                }
-
-                foreach(Attribute attribute; action.attributes)
-                {
-                    auto attributeContext = actionContext.addSubContext("attributes");
-                    attributeContext["id"] = attribute.id;
-                    attributeContext["name"] = attribute.name;
-                    attributeContext["dataType"] = attribute.dataType;
-                    attributeContext["description"] = attribute.description;
-                    attributeContext["defaultValue"] = attribute.defaultValue;
-                }
-            }
-
-            foreach(Attribute attribute; resource.attributes)
-            {
-                auto attributeContext = resourceContext.addSubContext("attributes");
-                attributeContext["id"] = attribute.id;
-                attributeContext["name"] = attribute.name;
-                attributeContext["dataType"] = attribute.dataType;
-                attributeContext["description"] = attribute.description;
-                attributeContext["defaultValue"] = attribute.defaultValue;
-            }
-
-            foreach(GETParameter param; resource.getParameters)
-            {
-                auto paramContext = resourceContext.addSubContext("resourceGetParameters");
-                paramContext["id"] = param.id;
-                paramContext["name"] = param.name;
-                paramContext["dataType"] = param.dataType;
-                paramContext["description"] = param.description;
-                if(param.isRequired)
-                    auto temp = paramContext.addSubContext("isRequired");
-                paramContext["defaultValue"] = param.defaultValue;
-            }
-        }
-    }
-
-    return context;
 }
