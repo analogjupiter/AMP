@@ -44,7 +44,10 @@ import std.file : read, readText;
 import std.json;
 import std.process;
 import std.stdio;
-
+import std.array : split, appender;
+import std.string;
+import std.regex;
+import std.typecons;
 /++
     Parsed API def
  +/
@@ -66,7 +69,7 @@ struct ParserResult
 /++
     Parses a blueprint string
  +/
-ParserResult parseBlueprint(string blueprint, File drafterLog)
+ParserResult parseBlueprint(string blueprint, File drafterLog, Tuple!(string, ulong)[]apibFileLengths)
 {
     auto r = ParserResult();
     r.filePath = "deprecated";
@@ -82,10 +85,58 @@ ParserResult parseBlueprint(string blueprint, File drafterLog)
     char[] jsonText = new char[1000000];
     jsonText = pipes.stdout.rawRead(jsonText);
 
-    pipes.stderr.LockingTextReader.copy(drafterLog.lockingTextWriter);
+    while(!pipes.stderr.eof)
+        writeDrafterErrorLog(drafterLog, pipes.stderr.readln(), apibFileLengths);
+    /+writeDrafterErrorLog(drafterLog, pipes.stderr.readln(), apibFileLengths);
+    writeDrafterErrorLog(drafterLog, pipes.stderr.readln(), apibFileLengths);
+    writeDrafterErrorLog(drafterLog, pipes.stderr.readln(), apibFileLengths);
+    writeDrafterErrorLog(drafterLog, pipes.stderr.readln(), apibFileLengths);
+    writeDrafterErrorLog(drafterLog, pipes.stderr.readln(), apibFileLengths);
 
+    drafterLog.writeln("hi");
+    drafterLog.writeln(pipes.stderr.LockingTextReader);
+    drafterLog.writeln("....:");
+    pipes.stderr.LockingTextReader.copy(drafterLog.lockingTextWriter);
++/
     JSONValue json = parseJSON(jsonText);
     r.api = process(json);
 
     return r;
+}
+
+void writeDrafterErrorLog(File drafterLog, string errorText, Tuple!(string, ulong)[] apibFileLengths)
+{
+    string[] errors = splitLines(errorText);
+
+    foreach(string error; errors)
+    {
+        auto match = matchFirst(error, r" line (\d+), column (\d+) - line (\d+), column (\d+)".regex);
+        if(!match.empty)
+        {
+            auto fixedError = appender!string;
+            fixedError ~= match.pre;
+            fixedError ~= "\n\t\tstart: ";
+            fixedError ~= getCorrectedLine(apibFileLengths, match[1].to!int, match[2].to!int);
+            fixedError ~= "\n\t\tend: ";
+            fixedError ~= getCorrectedLine(apibFileLengths, match[3].to!int, match[4].to!int);
+
+            drafterLog.writeln(fixedError.data);
+        }
+    }
+
+}
+
+string getCorrectedLine( Tuple!(string, ulong)[] apibFileLengths, int line, int column)
+{
+    ulong totalLength = 0;
+    foreach(Tuple!(string, ulong) file; apibFileLengths)
+    {
+        if(totalLength + file[1] > line)
+        {
+            int relativeLineNumber = line - totalLength.to!int;
+            return format!"file %s, line %s, column %s"(file[0], relativeLineNumber, column);
+        }
+        totalLength += file[1];
+    }
+    return "";
 }

@@ -43,6 +43,7 @@ import std.path : baseName, buildPath, dirName, stripExtension;
 import std.stdio;
 import std.string;
 import std.array : split, appender;
+import std.typecons;
 
 import amp.parser;
 import amp.output.html;
@@ -205,7 +206,7 @@ int runCLI(string[] args)
         stderr.writeln("\033[1;31mError: Non-existant blueprint path (" ~ path ~ ")\033[39;49m");
         return 1;
     }
-
+Tuple!(string, ulong)[] apibFileLengths;
     // Determine input path type (dir or file)
     // And read blueprint
     if (path.isDir)
@@ -225,10 +226,13 @@ The files will be concatenated in the specified sequence.\033[39;49m");
 
         auto blueprintAppender = appender!string;
 
+        int pathIndex = 0;
         foreach(string apibPath; getApibPaths(path))
         {
-            blueprintAppender ~= readText(apibPath);    // TODO add support for CRLF
-
+            string blueprintText = readText(apibPath);
+            apibFileLengths ~= tuple(apibPath, splitLines(blueprintText).length);
+            blueprintAppender ~= blueprintText;    // TODO add support for CRLF
+            pathIndex++;
         }
 
         blueprint = blueprintAppender.data;
@@ -246,7 +250,7 @@ The files will be concatenated in the specified sequence.\033[39;49m");
     }
 
     File drafterLog = (optUseStderr) ? stderr : File(outputPathAndBaseName ~ ".drafterlog", "w");
-    ParserResult r = blueprint.parseBlueprint(drafterLog);
+    ParserResult r = blueprint.parseBlueprint(drafterLog, apibFileLengths);
     auto html = new HTMLAPIDocsOutput(optTemplateDirectory);
     html.write(r, output);
 
