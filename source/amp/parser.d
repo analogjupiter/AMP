@@ -66,6 +66,11 @@ struct ParserResult
     }
 }
 
+class Parser
+{
+    
+}
+
 /++
     Parses a blueprint string
  +/
@@ -87,17 +92,7 @@ ParserResult parseBlueprint(string blueprint, File drafterLog, Tuple!(string, ul
 
     while(!pipes.stderr.eof)
         writeDrafterErrorLog(drafterLog, pipes.stderr.readln(), apibFileLengths);
-    /+writeDrafterErrorLog(drafterLog, pipes.stderr.readln(), apibFileLengths);
-    writeDrafterErrorLog(drafterLog, pipes.stderr.readln(), apibFileLengths);
-    writeDrafterErrorLog(drafterLog, pipes.stderr.readln(), apibFileLengths);
-    writeDrafterErrorLog(drafterLog, pipes.stderr.readln(), apibFileLengths);
-    writeDrafterErrorLog(drafterLog, pipes.stderr.readln(), apibFileLengths);
 
-    drafterLog.writeln("hi");
-    drafterLog.writeln(pipes.stderr.LockingTextReader);
-    drafterLog.writeln("....:");
-    pipes.stderr.LockingTextReader.copy(drafterLog.lockingTextWriter);
-+/
     JSONValue json = parseJSON(jsonText);
     r.api = process(json);
 

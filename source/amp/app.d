@@ -44,12 +44,13 @@ import std.stdio;
 import std.string;
 import std.array : split, appender;
 import std.typecons;
+import core.stdc.stdlib;
 
 import amp.parser;
 import amp.output.html;
+import amp.settings;
 
-enum ConfigFile = "amp.config";
-
+enum ConfigFileName = "amp.config";
 /++
     Launches AMP in command-line mode
  +/
@@ -76,19 +77,13 @@ int runCLI(string[] args)
 
     if (rgetopt.helpWanted)
     {
-        defaultGetoptPrinter(import("appname.txt") ~ "\n\n  Usage:\n    " ~ args[0] ~
-            " [options] [blueprint path] [output directory]\n\n\nAvailable options:\n==================", rgetopt.options);
+        printHelp(args[0], rgetopt);
         return 0;
     }
     else if (optPrintVersionInfo)
     {
         printVersionInfo();
         return 0;
-    }
-
-    if (optUseStdout)
-    {
-        optUseStderr = true;
     }
 
     // Blueprint path passed?
@@ -99,20 +94,16 @@ int runCLI(string[] args)
         return 1;
     }
 
-    // No template directory specified?
-    if (optTemplateDirectory is null)
-    {
-        // Just use factory template
-        optTemplateDirectory = thisExePath.dirName.buildPath("..", "factory-template");
+    Settings settings = Settings.instance;
+    settings.useStdout = optUseStdout;
+    settings.useStderr = optUseStderr || optUseStdout; // useStdout also enables stderr
 
-        // Can the factory template be found?
-        if (!optTemplateDirectory.buildPath(TemplateFileNameFull).exists)
-        {
-            // no
-            stderr.writeln("\033[1;31mError: Factory template is missing; please specify a template directory.\033[39;49m");
-            return 1;
-        }
+    if (optUseStdout)
+    {
+        optUseStderr = true;
     }
+
+    setTemplatePath(optTemplateDirectory);
 
     string path;
     File output;
@@ -124,79 +115,31 @@ int runCLI(string[] args)
         // no (file instead)
         // Create directory if it does not exist and copy template files
 
-        // Output directory specified?
-        if (args.length < 3)
-        {
-            // no
-            stderr.writeln("\033[1;31mError: No output directory specified\033[39;49m");
-            return 1;
-        }
-
         path = args[$ - 2];
-        immutable string outputDir = args[$ - 1];
-        outputPathAndBaseName = outputDir.buildPath(path.baseName.stripExtension);
-        immutable string outputPath = outputPathAndBaseName ~ ".html";
+        settings.blueprintPath = args[$ - 2];
+        immutable string outputDir = getOutputDirPath(args);
+        immutable string outputHtmlPath = getOutputHtmlPath(args, outputDir);
 
         // Does the output file already exists and should not be overriden?
-        if (!optForceOverride && outputPath.exists)
+        if (!optForceOverride && outputHtmlPath.exists)
         {
             // yes
             stderr.writeln("\033[1;31mError: Output file already exists. Use --force to override.\033[39;49m");
             return 1;
         }
 
-        // Does the output directory exist?
-        if (!outputDir.exists)
-        {
-            // no
-            // so let's create it
-            outputDir.mkdirRecurse();
-        }
+        checkOutputDirIsValid(outputDir);
 
-        // Verify directory
-        if (!outputDir.isDir)
-        {
-            // the so-called directory is actually something else (probably an existing file)
-            stderr.writeln("\033[1;31mError: The specified output directory is actually something else\033[39;49m");
-            return 1;
-        }
-
-        output = File(outputPath, "w");
-
-        // Copy template-related files into output directory
-        foreach(DirEntry e; optTemplateDirectory.dirEntries(SpanMode.breadth))
-        {
-            // Don't copy hidden files
-            if (e.baseName.startsWith('.'))
-            {
-                continue;
-            }
-
-            string target = outputDir.buildPath(e[(optTemplateDirectory.length + 1) .. $]);
-
-            // Don't override already existing files
-            if (!target.exists)
-            {
-                if (e.isDir)
-                {
-                    target.mkdirRecurse();
-                }
-                else
-                {
-                    e.copy(target);
-                }
-            }
-            else if (!e.isDir)
-            {
-                // log
-                stderr.writeln("\033[1;33mSkipping copying of template member `", e[(optTemplateDirectory.length + 1) .. $], "`\033[39;49m");
-            }
-        }
+        output = File(outputHtmlPath, "w");
+        settings.output = output;
+        copyTemplateFiles();
     }
     else
     {
         // yes (stdout)
         path = args[$ - 1];
+        settings.blueprintPath = args[$ - 1];
+        settings.output = stdout;
         output = stdout;
     }
 
@@ -206,14 +149,14 @@ int runCLI(string[] args)
         stderr.writeln("\033[1;31mError: Non-existant blueprint path (" ~ path ~ ")\033[39;49m");
         return 1;
     }
-Tuple!(string, ulong)[] apibFileLengths;
+Tuple!(string, ulong)[] blueprintFileDetails;
     // Determine input path type (dir or file)
     // And read blueprint
     if (path.isDir)
     {
         // Read config file and concat all files specified in it
 
-        string configPath = buildPath(path, ConfigFile);
+        string configPath = buildPath(path, ConfigFileName);
 
         if(!exists(configPath))
         {
@@ -230,8 +173,9 @@ The files will be concatenated in the specified sequence.\033[39;49m");
         foreach(string apibPath; getApibPaths(path))
         {
             string blueprintText = readText(apibPath);
-            apibFileLengths ~= tuple(apibPath, splitLines(blueprintText).length);
+            blueprintFileDetails ~= tuple(apibPath, splitLines(blueprintText).length);
             blueprintAppender ~= blueprintText;    // TODO add support for CRLF
+            blueprintAppender ~= "\n"; // avoid two lines merging to one
             pathIndex++;
         }
 
@@ -250,7 +194,7 @@ The files will be concatenated in the specified sequence.\033[39;49m");
     }
 
     File drafterLog = (optUseStderr) ? stderr : File(outputPathAndBaseName ~ ".drafterlog", "w");
-    ParserResult r = blueprint.parseBlueprint(drafterLog, apibFileLengths);
+    ParserResult r = blueprint.parseBlueprint(drafterLog, blueprintFileDetails);
     auto html = new HTMLAPIDocsOutput(optTemplateDirectory);
     html.write(r, output);
 
@@ -265,6 +209,107 @@ void printVersionInfo()
     writeln("AMP v", import("version.txt"));
 }
 
+void printHelp(string appPath, GetoptResult rgetopt)
+{
+    defaultGetoptPrinter(import("appname.txt") ~ "\n\n  Usage:\n    " ~ appPath ~
+        " [options] [blueprint path] [output directory]\n\n\nAvailable options:\n==================", rgetopt.options);
+}
+
+void setTemplatePath(string optTemplateDirectory)
+{
+    // No template directory specified?
+    if (optTemplateDirectory is null)
+    {
+        // Just use factory template
+        optTemplateDirectory = thisExePath.dirName.buildPath("..", "factory-template");
+    }
+    // Can the factory template be found?
+    if (!optTemplateDirectory.buildPath(TemplateFileNameFull).exists)
+    {
+        // no
+        stderr.writeln("\033[1;31mError: Factory template is missing; please specify a template directory.\033[39;49m");
+        exit(1);
+    }
+
+    Settings.instance.templateDirPath = optTemplateDirectory;
+}
+
+void copyTemplateFiles()
+{
+    auto settings = Settings.instance;
+    // Copy template-related files into output directory
+    foreach(DirEntry e; settings.templateDirPath.dirEntries(SpanMode.breadth))
+    {
+        // Don't copy hidden files
+        if (e.baseName.startsWith('.'))
+        {
+            continue;
+        }
+
+        string target = settings.outputDirPath.buildPath(e[(settings.templateDirPath.length + 1) .. $]);
+
+        // Don't override already existing files
+        if (!target.exists)
+        {
+            if (e.isDir)
+            {
+                target.mkdirRecurse();
+            }
+            else
+            {
+                e.copy(target);
+            }
+        }
+        else if (!e.isDir)
+        {
+            // log
+            stderr.writeln("\033[1;33mSkipping copying of template member `", e[(settings.templateDirPath.length + 1) .. $], "`\033[39;49m");
+        }
+    }
+}
+
+string getOutputDirPath(string[] args)
+{
+    // Output directory specified?
+    if (args.length < 3)
+    {
+        // no
+        stderr.writeln("\033[1;31mError: No output directory specified\033[39;49m");
+        exit(1);
+    }
+
+    return args[$-1];
+}
+
+string getOutputHtmlPath(string[] args, string outputDirPath)
+{
+    string blueprintPath = args[$ - 2];
+    string bluePrintProjectName = blueprintPath.baseName.stripExtension;
+    immutable string outputDir = args[$ - 1];
+    string outputHtmlPath = outputDir.buildPath(blueprintPath.baseName.stripExtension) ~ ".html";
+    return outputHtmlPath;
+}
+
+void checkOutputDirIsValid(string outputDir)
+{
+    // Does the output directory exist?
+    if (!outputDir.exists)
+    {
+        // no
+        // so let's create it
+        outputDir.mkdirRecurse();
+    }
+
+    // Verify directory
+    if (!outputDir.isDir)
+    {
+        // the so-called directory is actually something else (probably an existing file)
+        stderr.writeln("\033[1;31mError: The specified output directory is actually something else\033[39;49m");
+        exit(1);
+    }
+}
+
+
 /++
     Reads the paths from the config file
     and returns all paths that exist
@@ -273,7 +318,7 @@ string[] getApibPaths(string path)
 {
     string[] validPaths;
     stderr.writeln("debug");
-    string configPath = buildPath(path, ConfigFile);
+    string configPath = buildPath(path, ConfigFileName);
 
     string text = readText(configPath);
     string[] apibPaths = splitLines(text);
