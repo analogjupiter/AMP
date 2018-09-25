@@ -37,10 +37,13 @@ module amp.settings;
 
 import std.file : readText, copy, dirEntries, DirEntry, exists, isDir, mkdirRecurse, SpanMode, thisExePath;
 import std.stdio;
+import std.typecons;
 
 class Settings
 {
     protected static Settings _instance;
+
+    public string projectName ="";// TODO
 
     public string templateDirPath;
     public string blueprintPath;
@@ -54,7 +57,7 @@ class Settings
     public bool forceOverride;
 
     public File drafterLog;
-
+    public Tuple!(string, ulong)[] blueprintFileDetails;
 
     public static Settings instance()
     {

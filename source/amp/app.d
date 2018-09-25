@@ -85,7 +85,6 @@ int runCLI(string[] args)
         printVersionInfo();
         return 0;
     }
-
     // Blueprint path passed?
     if (args.length < 2)
     {
@@ -97,94 +96,21 @@ int runCLI(string[] args)
     Settings settings = Settings.instance;
     settings.useStdout = optUseStdout;
     settings.useStderr = optUseStderr || optUseStdout; // useStdout also enables stderr
-
-    if (optUseStdout)
-    {
-        optUseStderr = true;
-    }
+    settings.blueprintPath = settings.useStdout ? args[$ - 1] : args[$ - 2];
+    settings.output = getOutputFile(settings);
 
     setTemplatePath(optTemplateDirectory);
 
-    string path;
-    File output;
-    string outputPathAndBaseName;
-
-    // Use stdout for output?
-    if (!optUseStdout)
-    {
-        // no (file instead)
-        // Create directory if it does not exist and copy template files
-
-        path = args[$ - 2];
-        settings.blueprintPath = args[$ - 2];
-        immutable string outputDir = getOutputDirPath(args);
-        immutable string outputHtmlPath = getOutputHtmlPath(args, outputDir);
-
-        // Does the output file already exists and should not be overriden?
-        if (!optForceOverride && outputHtmlPath.exists)
-        {
-            // yes
-            stderr.writeln("\033[1;31mError: Output file already exists. Use --force to override.\033[39;49m");
-            return 1;
-        }
-
-        checkOutputDirIsValid(outputDir);
-
-        output = File(outputHtmlPath, "w");
-        settings.output = output;
-        copyTemplateFiles();
-    }
-    else
-    {
-        // yes (stdout)
-        path = args[$ - 1];
-        settings.blueprintPath = args[$ - 1];
-        settings.output = stdout;
-        output = stdout;
-    }
+    settings.output = getOutputFile(settings);
 
     // Verify path
-    if (!exists(path))
+    if (!exists(settings.blueprintPath))
     {
-        stderr.writeln("\033[1;31mError: Non-existant blueprint path (" ~ path ~ ")\033[39;49m");
+        stderr.writeln("\033[1;31mError: Non-existant blueprint path (" ~ settings.blueprintPath ~ ")\033[39;49m");
         return 1;
     }
-Tuple!(string, ulong)[] blueprintFileDetails;
-    // Determine input path type (dir or file)
-    // And read blueprint
-    if (path.isDir)
-    {
-        // Read config file and concat all files specified in it
 
-        string configPath = buildPath(path, ConfigFileName);
-
-        if(!exists(configPath))
-        {
-            stderr.writeln("\033[1;31mError: config file not found (" ~ configPath ~ ")
-If you are using a directory, define a config file (amp.config) in it.
-The config file should contain paths to all .apib files that you want to use.
-The files will be concatenated in the specified sequence.\033[39;49m");
-            return 1;
-        }
-
-        auto blueprintAppender = appender!string;
-
-        int pathIndex = 0;
-        foreach(string apibPath; getApibPaths(path))
-        {
-            string blueprintText = readText(apibPath);
-            blueprintFileDetails ~= tuple(apibPath, splitLines(blueprintText).length);
-            blueprintAppender ~= blueprintText;    // TODO add support for CRLF
-            blueprintAppender ~= "\n"; // avoid two lines merging to one
-            pathIndex++;
-        }
-
-        blueprint = blueprintAppender.data;
-    }
-    else
-    {
-        blueprint = readText(path);
-    }
+    blueprint = getBlueprint(settings.blueprintPath);
 
     // parse and render the blueprint
     if(blueprint.length == 0)
@@ -193,10 +119,10 @@ The files will be concatenated in the specified sequence.\033[39;49m");
         return 0;
     }
 
-    File drafterLog = (optUseStderr) ? stderr : File(outputPathAndBaseName ~ ".drafterlog", "w");
-    ParserResult r = blueprint.parseBlueprint(drafterLog, blueprintFileDetails);
+    File drafterLog = (settings.useStderr) ? stderr : File(settings.outputDirPath.buildPath(settings.projectName) ~ ".drafterlog", "w");
+    ParserResult r = blueprint.parseBlueprint(drafterLog, settings.blueprintFileDetails);
     auto html = new HTMLAPIDocsOutput(optTemplateDirectory);
-    html.write(r, output);
+    html.write(r, settings.output);
 
     return 0;
 }
@@ -213,6 +139,76 @@ void printHelp(string appPath, GetoptResult rgetopt)
 {
     defaultGetoptPrinter(import("appname.txt") ~ "\n\n  Usage:\n    " ~ appPath ~
         " [options] [blueprint path] [output directory]\n\n\nAvailable options:\n==================", rgetopt.options);
+}
+
+void parseAndRenderBlueprint()
+{
+
+}
+
+string getBlueprint(string path)
+{
+    auto settings = Settings.instance;
+    Tuple!(string, ulong)[] blueprintFileDetails;
+    string blueprint;
+    // Determine input path type (dir or file)
+    // And read blueprint
+    if (path.isDir)
+    {
+        // Read config file and concat all files specified in it
+
+        string configPath = buildPath(path, ConfigFileName);
+
+        if(!exists(configPath))
+        {
+            stderr.writeln("\033[1;31mError: config file not found (" ~ configPath ~ ")
+If you are using a directory, define a config file (amp.config) in it.
+The config file should contain paths to all .apib files that you want to use.
+The files will be concatenated in the specified sequence.\033[39;49m");
+            exit(1);
+        }
+
+        auto blueprintAppender = appender!string;
+
+        int pathIndex = 0;
+        foreach(string apibPath; getApibPaths(path))
+        {
+            string blueprintText = readText(apibPath);
+            blueprintFileDetails ~= tuple(apibPath, splitLines(blueprintText).length);
+            blueprintAppender ~= blueprintText;    // TODO add support for CRLF
+            blueprintAppender ~= "\n"; // avoid two lines merging to one
+            pathIndex++;
+        }
+
+        settings.blueprintFileDetails = blueprintFileDetails;
+        blueprint = blueprintAppender.data;
+    }
+    else
+    {
+        blueprint = readText(path);
+    }
+
+    return blueprint;
+}
+
+File getOutputFile(Settings settings)
+{
+    if(settings.useStdout)
+        return stdout;
+
+    // Does the output file already exists and should not be overriden?
+    if(!settings.forceOverride && settings.outputHtmlPath.exists)
+    {
+        stderr.writeln("\033[1;31mError: Output file already exists. Use --force to override.\033[39;49m");
+        exit(1);
+    }
+
+    checkOutputDirIsValid(settings.outputDirPath);
+
+    settings.output = File(settings.outputHtmlPath, "w");
+    copyTemplateFiles();
+
+    return settings.output;
 }
 
 void setTemplatePath(string optTemplateDirectory)

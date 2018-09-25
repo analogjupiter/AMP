@@ -66,9 +66,114 @@ struct ParserResult
     }
 }
 
-class Parser
+class BlueprintParser
 {
-    
+    private:
+        string blueprint;
+        DrafterLogger logger;
+        Tuple!(string, ulong)[] apibFileLengths;
+
+    this(string blueprint, File logger, Tuple!(string, ulong)[]apibFileLengths)
+    {
+        this.blueprint = blueprint;
+        this.logger = new DrafterLogger(logger, apibFileLengths);
+        this.apibFileLengths = apibFileLengths;
+    }
+
+    public ParserResult parse()
+    {
+        JSONValue json = parseBlueprintToJson();
+
+        auto r = ParserResult();
+        r.filePath = "deprecated";
+        r.api = process(json);
+
+        return r;
+    }
+
+    private JSONValue parseBlueprintToJson()
+    {
+        ProcessPipes pipes = pipeProcess(["drafter", "-u", "-f",  "json"], Redirect.all);
+
+        pipes.stdin.write(blueprint);
+        pipes.stdin.flush();
+        pipes.stdin.close();
+        scope(exit) wait(pipes.pid);
+
+        //TODO implement dynamic buffer size
+        char[] jsonText = new char[1000000];
+        jsonText = pipes.stdout.rawRead(jsonText);
+
+        logger.writeStream(pipes.stderr);
+
+        return parseJSON(jsonText);
+    }
+}
+
+/++
+Fixes the line numbers in errors of drafter's log and writes them to the given file
++/
+class DrafterLogger
+{
+    private File logger;
+    /+
+    string ... file name
+    ulong ... number of lines in the file
+    +/
+    private Tuple!(string, ulong)[] blueprintFileDetails;
+
+    this(File logger, Tuple!(string, ulong)[] blueprintFileDetails)
+    {
+        this.logger = logger;
+        this.blueprintFileDetails = blueprintFileDetails;
+    }
+
+    public void writeStream(File stream)
+    {
+        while(!stream.eof)
+            this.writeln(stream.readln());
+    }
+
+    public void writeText(string errorText)
+    {
+        string[] errors = splitLines(errorText);
+
+        foreach(string error; errors)
+        {
+            this.writeln(error);
+        }
+    }
+
+    public void writeln(string errorLine)
+    {
+        auto match = matchFirst(errorLine, r" line (\d+), column (\d+) - line (\d+), column (\d+)".regex);
+        if(!match.empty)
+        {
+            auto fixedError = appender!string;
+            fixedError ~= match.pre;
+            fixedError ~= "\n\t\tstart: ";
+            fixedError ~= getCorrectErrorPosition(match[1].to!int, match[2].to!int);
+            fixedError ~= "\n\t\tend: ";
+            fixedError ~= getCorrectErrorPosition(match[3].to!int, match[4].to!int);
+
+            logger.writeln(fixedError.data);
+        }
+    }
+
+    private string getCorrectErrorPosition(int originalLineNumber, int columnNumber)
+    {
+        ulong nrOfLines = 0;
+        foreach(Tuple!(string, ulong) file; blueprintFileDetails)
+        {
+            if(nrOfLines + file[1] > originalLineNumber)
+            {
+                int relativeLineNumber = originalLineNumber - nrOfLines.to!int;
+                return format!"file %s, line %s, column %s"(file[0], relativeLineNumber, columnNumber);
+            }
+            nrOfLines += file[1];
+        }
+        return "";
+    }
 }
 
 /++
