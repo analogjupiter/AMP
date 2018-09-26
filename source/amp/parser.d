@@ -73,7 +73,7 @@ class BlueprintParser
         DrafterLogger logger;
         Tuple!(string, ulong)[] apibFileLengths;
 
-    this(string blueprint, File logger, Tuple!(string, ulong)[]apibFileLengths)
+    public this(string blueprint, File logger, Tuple!(string, ulong)[]apibFileLengths)
     {
         this.blueprint = blueprint;
         this.logger = new DrafterLogger(logger, apibFileLengths);

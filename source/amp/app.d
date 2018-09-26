@@ -49,6 +49,7 @@ import core.stdc.stdlib;
 import amp.parser;
 import amp.output.html;
 import amp.settings;
+import amp.apidoc;
 
 enum ConfigFileName = "amp.config";
 /++
@@ -93,14 +94,14 @@ int runCLI(string[] args)
         return 1;
     }
 
+
+    // Init settings from args
     Settings settings = Settings.instance;
     settings.useStdout = optUseStdout;
     settings.useStderr = optUseStderr || optUseStdout; // useStdout also enables stderr
     settings.blueprintPath = settings.useStdout ? args[$ - 1] : args[$ - 2];
     settings.output = getOutputFile(settings);
-
-    setTemplatePath(optTemplateDirectory);
-
+    settings.templateDirPath = getTemplatePath(optTemplateDirectory);
     settings.output = getOutputFile(settings);
 
     // Verify path
@@ -110,19 +111,10 @@ int runCLI(string[] args)
         return 1;
     }
 
-    blueprint = getBlueprint(settings.blueprintPath);
-
-    // parse and render the blueprint
-    if(blueprint.length == 0)
-    {
-        stderr.writeln("Warning: the blueprint is empty!");
-        return 0;
-    }
-
     File drafterLog = (settings.useStderr) ? stderr : File(settings.outputDirPath.buildPath(settings.projectName) ~ ".drafterlog", "w");
-    ParserResult r = blueprint.parseBlueprint(drafterLog, settings.blueprintFileDetails);
-    auto html = new HTMLAPIDocsOutput(optTemplateDirectory);
-    html.write(r, settings.output);
+    auto apiDoc = new APIDocCreator(settings.blueprintPath, settings.templateDirPath, settings.output, drafterLog);
+
+    apiDoc.create();
 
     return 0;
 }
@@ -211,23 +203,23 @@ File getOutputFile(Settings settings)
     return settings.output;
 }
 
-void setTemplatePath(string optTemplateDirectory)
+string getTemplatePath(string templatePath)
 {
     // No template directory specified?
-    if (optTemplateDirectory is null)
+    if (templatePath is null)
     {
         // Just use factory template
-        optTemplateDirectory = thisExePath.dirName.buildPath("..", "factory-template");
+        templatePath = thisExePath.dirName.buildPath("..", "factory-template");
     }
     // Can the factory template be found?
-    if (!optTemplateDirectory.buildPath(TemplateFileNameFull).exists)
+    if (!templatePath.buildPath(TemplateFileNameFull).exists)
     {
         // no
         stderr.writeln("\033[1;31mError: Factory template is missing; please specify a template directory.\033[39;49m");
         exit(1);
     }
 
-    Settings.instance.templateDirPath = optTemplateDirectory;
+    return  templatePath;
 }
 
 void copyTemplateFiles()
