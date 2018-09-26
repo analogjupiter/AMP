@@ -86,6 +86,9 @@ int runCLI(string[] args)
         printVersionInfo();
         return 0;
     }
+    
+    // Setup settings and render the blueprint
+
     // Blueprint path passed?
     if (args.length < 2)
     {
@@ -93,7 +96,6 @@ int runCLI(string[] args)
         stderr.writeln("\033[1;31mError: No blueprint path specified\033[39;49m");
         return 1;
     }
-
 
     // Init settings from args
     Settings settings = Settings.instance;
@@ -111,10 +113,7 @@ int runCLI(string[] args)
         return 1;
     }
 
-    File drafterLog = (settings.useStderr) ? stderr : File(settings.outputDirPath.buildPath(settings.projectName) ~ ".drafterlog", "w");
-    auto apiDoc = new APIDocCreator(settings.blueprintPath, settings.templateDirPath, settings.output, drafterLog);
-
-    apiDoc.create();
+    parseAndRenderBlueprint(settings);
 
     return 0;
 }
@@ -133,54 +132,12 @@ void printHelp(string appPath, GetoptResult rgetopt)
         " [options] [blueprint path] [output directory]\n\n\nAvailable options:\n==================", rgetopt.options);
 }
 
-void parseAndRenderBlueprint()
+void parseAndRenderBlueprint(Settings settings)
 {
+    File drafterLog = (settings.useStderr) ? stderr : File(settings.outputDirPath.buildPath(settings.projectName) ~ ".drafterlog", "w");
+    auto apiDoc = new APIDocCreator(settings.blueprintPath, settings.templateDirPath, settings.output, drafterLog);
 
-}
-
-string getBlueprint(string path)
-{
-    auto settings = Settings.instance;
-    Tuple!(string, ulong)[] blueprintFileDetails;
-    string blueprint;
-    // Determine input path type (dir or file)
-    // And read blueprint
-    if (path.isDir)
-    {
-        // Read config file and concat all files specified in it
-
-        string configPath = buildPath(path, ConfigFileName);
-
-        if(!exists(configPath))
-        {
-            stderr.writeln("\033[1;31mError: config file not found (" ~ configPath ~ ")
-If you are using a directory, define a config file (amp.config) in it.
-The config file should contain paths to all .apib files that you want to use.
-The files will be concatenated in the specified sequence.\033[39;49m");
-            exit(1);
-        }
-
-        auto blueprintAppender = appender!string;
-
-        int pathIndex = 0;
-        foreach(string apibPath; getApibPaths(path))
-        {
-            string blueprintText = readText(apibPath);
-            blueprintFileDetails ~= tuple(apibPath, splitLines(blueprintText).length);
-            blueprintAppender ~= blueprintText;    // TODO add support for CRLF
-            blueprintAppender ~= "\n"; // avoid two lines merging to one
-            pathIndex++;
-        }
-
-        settings.blueprintFileDetails = blueprintFileDetails;
-        blueprint = blueprintAppender.data;
-    }
-    else
-    {
-        blueprint = readText(path);
-    }
-
-    return blueprint;
+    apiDoc.create();
 }
 
 File getOutputFile(Settings settings)
@@ -295,39 +252,4 @@ void checkOutputDirIsValid(string outputDir)
         stderr.writeln("\033[1;31mError: The specified output directory is actually something else\033[39;49m");
         exit(1);
     }
-}
-
-
-/++
-    Reads the paths from the config file
-    and returns all paths that exist
-+/
-string[] getApibPaths(string path)
-{
-    string[] validPaths;
-    stderr.writeln("debug");
-    string configPath = buildPath(path, ConfigFileName);
-
-    string text = readText(configPath);
-    string[] apibPaths = splitLines(text);
-
-    foreach(string apibPath; apibPaths)
-    {
-        apibPath =  buildPath(path, apibPath);
-
-        // The line is not empty
-        if(apibPath.length > path.length)
-        {
-            if(exists(apibPath) && !apibPath.isDir)
-            {
-                validPaths ~= apibPath;
-            }
-            else
-            {
-                stderr.writeln("Warning: Ignored path (not found): (" ~ apibPath ~ ")");
-            }
-        }
-    }
-
-    return validPaths;
 }
