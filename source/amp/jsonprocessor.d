@@ -19,7 +19,6 @@
 module amp.jsonprocessor;
 
 import amp.parser;
-import amp.apielement;
 import amp.apiwrappers;
 import amp.jsonpath;
 
@@ -31,6 +30,19 @@ int nextID = 0;
 
 const string TITLE_PATH = "meta.title.content";
 const string DESCRIPTION_PATH = "content[?element=copy].[0].content"; // can only be used when the description is saved in a "copy" element
+enum ElementType{
+    Group = "category",
+    ResourceGroup = "resourceGroup",
+    Resource = "resource",
+    Action = "transition",
+    Description = "copy",
+    Transaction = "httpTransaction",
+    Request = "httpRequest",
+    Response = "httpResponse",
+    Member = "member",
+    Asset = "asset",         // Part of a Request or Response containing the message body
+    Attribute = "dataStructure"
+}
 
 /++
     Input: List of members containing attributes
@@ -125,7 +137,6 @@ Response[] getResponses(JSONValue json)
     foreach(JSONValue responsej; inputPath.parse("[?element=httpResponse]").array)
     {
         auto path = new JSONPath(responsej);
-        auto response = new APIElement(responsej);
 
         string jsonExample = path.parseString("content[?element=asset].[0].content");
         string description = path.parseString(DESCRIPTION_PATH);
