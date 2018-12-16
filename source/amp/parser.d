@@ -48,6 +48,8 @@ import std.array : split, appender;
 import std.string;
 import std.regex;
 import std.typecons;
+import core.stdc.stdlib;
+
 /++
     Parsed API def
  +/
@@ -73,7 +75,7 @@ class BlueprintParser
         DrafterLogger logger;
         Tuple!(string, ulong)[] apibFileLengths;
 
-    public this(string blueprint, File logger, Tuple!(string, ulong)[]apibFileLengths)
+    public this(string blueprint, File logger, Tuple!(string, ulong)[] apibFileLengths)
     {
         this.blueprint = blueprint;
         this.logger = new DrafterLogger(logger, apibFileLengths);
@@ -83,10 +85,15 @@ class BlueprintParser
     public ParserResult parse()
     {
         JSONValue json = parseBlueprintToJson();
-
         auto r = ParserResult();
-        r.filePath = "deprecated";
-        r.api = process(json);
+
+        try {
+            r.filePath = "deprecated";
+            r.api = process(json);
+        } catch (JSONException ex) {
+            writeln("Parsing Blueprint failed. Check the logs for errors.");
+            exit(1);
+        }
 
         return r;
     }
@@ -106,7 +113,14 @@ class BlueprintParser
 
         logger.writeStream(pipes.stderr);
 
-        return parseJSON(jsonText);
+        auto json = parseJSON(jsonText);
+
+        if(json.isNull()) {
+            writeln("Parsing Blueprint failed. Check the logs for errors.");
+            exit(1);
+        }
+
+       return json;
     }
 }
 
@@ -132,6 +146,8 @@ class DrafterLogger
     {
         while(!stream.eof)
             this.writeln(stream.readln());
+
+        logger.flush();
     }
 
     public void writeText(string errorText)
@@ -157,6 +173,9 @@ class DrafterLogger
             fixedError ~= getCorrectErrorPosition(match[3].to!int, match[4].to!int);
 
             logger.writeln(fixedError.data);
+        } else {
+            // print raw error
+            logger.writeln(errorLine);
         }
     }
 

@@ -60,7 +60,6 @@ class APIDocCreator
 
     Tuple!(string, ulong)[] blueprintFileDetails;
 
-
     public this(string blueprintPath, string templatePath, File output, File errorLog = stderr)
     {
         this.blueprintPath = blueprintPath;
@@ -79,8 +78,10 @@ class APIDocCreator
         }
 
         BlueprintParser parser = new BlueprintParser(blueprint, errorLog, blueprintFileDetails);
+        stderr.writeln("Info: Parsing the blueprint...");
         ParserResult apiResult = parser.parse();
         auto html = new HTMLAPIDocsOutput(templatePath);
+        stderr.writeln("Info: Rendering the html...");
         html.write(apiResult, output);
     }
 
@@ -124,7 +125,6 @@ The files will be concatenated in the specified sequence.\033[39;49m");
             blueprintAppender ~= "\n"; // avoid two lines merging to one
         }
 
-        //settings.blueprintFileDetails = blueprintFileDetails;
         return blueprintAppender.data;
     }
 
@@ -160,5 +160,4 @@ The files will be concatenated in the specified sequence.\033[39;49m");
 
         return validPaths;
     }
-
 }

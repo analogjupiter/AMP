@@ -48,9 +48,9 @@ class Settings
     public string templateDirPath;
     public string blueprintPath;
 
-    public string outputDirPath;
-    public string outputHtmlPath;
-    public File output;
+    public string outputDirPath;        // directory, where everything is outputted
+    public string outputHtmlPath;       // path to the project.html file
+    public File output;         // either stdout or file of outputHtmlPath
 
     public bool useStdout;      // results get printed to stdout instead of file
     public bool useStderr;

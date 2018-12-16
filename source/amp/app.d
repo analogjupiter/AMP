@@ -86,13 +86,12 @@ int runCLI(string[] args)
         printVersionInfo();
         return 0;
     }
-    
+
     // Setup settings and render the blueprint
 
     // Blueprint path passed?
     if (args.length < 2)
     {
-        // no
         stderr.writeln("\033[1;31mError: No blueprint path specified\033[39;49m");
         return 1;
     }
@@ -101,8 +100,10 @@ int runCLI(string[] args)
     Settings settings = Settings.instance;
     settings.useStdout = optUseStdout;
     settings.useStderr = optUseStderr || optUseStdout; // useStdout also enables stderr
+    settings.forceOverride = optForceOverride;
     settings.blueprintPath = settings.useStdout ? args[$ - 1] : args[$ - 2];
-    settings.output = getOutputFile(settings);
+    settings.outputDirPath = getOutputDirPath(args);
+    settings.outputHtmlPath = getOutputHtmlPath(args, settings.outputDirPath);
     settings.templateDirPath = getTemplatePath(optTemplateDirectory);
     settings.output = getOutputFile(settings);
 
@@ -114,8 +115,17 @@ int runCLI(string[] args)
     }
 
     parseAndRenderBlueprint(settings);
+    copyTemplateFiles(settings);
 
     return 0;
+}
+
+void parseAndRenderBlueprint(Settings settings)
+{
+    File drafterLog = (settings.useStderr) ? stderr : File(settings.outputDirPath.buildPath(settings.projectName) ~ ".drafterlog", "w");
+    auto apiDoc = new APIDocCreator(settings.blueprintPath, settings.templateDirPath, settings.output, drafterLog);
+
+    apiDoc.create();
 }
 
 /++
@@ -132,32 +142,19 @@ void printHelp(string appPath, GetoptResult rgetopt)
         " [options] [blueprint path] [output directory]\n\n\nAvailable options:\n==================", rgetopt.options);
 }
 
-void parseAndRenderBlueprint(Settings settings)
-{
-    File drafterLog = (settings.useStderr) ? stderr : File(settings.outputDirPath.buildPath(settings.projectName) ~ ".drafterlog", "w");
-    auto apiDoc = new APIDocCreator(settings.blueprintPath, settings.templateDirPath, settings.output, drafterLog);
-
-    apiDoc.create();
-}
-
 File getOutputFile(Settings settings)
 {
     if(settings.useStdout)
         return stdout;
 
-    // Does the output file already exists and should not be overriden?
+    // Does the output file already exist and should not be overriden?
     if(!settings.forceOverride && settings.outputHtmlPath.exists)
     {
         stderr.writeln("\033[1;31mError: Output file already exists. Use --force to override.\033[39;49m");
         exit(1);
     }
 
-    checkOutputDirIsValid(settings.outputDirPath);
-
-    settings.output = File(settings.outputHtmlPath, "w");
-    copyTemplateFiles();
-
-    return settings.output;
+    return File(settings.outputHtmlPath, "w");
 }
 
 string getTemplatePath(string templatePath)
@@ -179,36 +176,35 @@ string getTemplatePath(string templatePath)
     return  templatePath;
 }
 
-void copyTemplateFiles()
+void copyTemplateFiles(Settings settings)
 {
-    auto settings = Settings.instance;
     // Copy template-related files into output directory
-    foreach(DirEntry e; settings.templateDirPath.dirEntries(SpanMode.breadth))
+    foreach(DirEntry source; settings.templateDirPath.dirEntries(SpanMode.breadth))
     {
         // Don't copy hidden files
-        if (e.baseName.startsWith('.'))
+        if (source.baseName.startsWith('.'))
         {
             continue;
         }
 
-        string target = settings.outputDirPath.buildPath(e[(settings.templateDirPath.length + 1) .. $]);
+        string target = settings.outputDirPath.buildPath(source[(settings.templateDirPath.length + 1) .. $]);
 
         // Don't override already existing files
         if (!target.exists)
         {
-            if (e.isDir)
+            if (source.isDir)
             {
                 target.mkdirRecurse();
             }
             else
             {
-                e.copy(target);
+                source.copy(target);
             }
         }
-        else if (!e.isDir)
+        else if (!source.isDir)
         {
             // log
-            stderr.writeln("\033[1;33mSkipping copying of template member `", e[(settings.templateDirPath.length + 1) .. $], "`\033[39;49m");
+            stderr.writeln("\033[1;33mSkipping copying of template member `", source[(settings.templateDirPath.length + 1) .. $], "`\033[39;49m");
         }
     }
 }
@@ -218,10 +214,11 @@ string getOutputDirPath(string[] args)
     // Output directory specified?
     if (args.length < 3)
     {
-        // no
         stderr.writeln("\033[1;31mError: No output directory specified\033[39;49m");
         exit(1);
     }
+
+    tryCreateOutputDir(args[$-1]);
 
     return args[$-1];
 }
@@ -235,20 +232,16 @@ string getOutputHtmlPath(string[] args, string outputDirPath)
     return outputHtmlPath;
 }
 
-void checkOutputDirIsValid(string outputDir)
+void tryCreateOutputDir(string outputDir)
 {
-    // Does the output directory exist?
     if (!outputDir.exists)
     {
-        // no
-        // so let's create it
         outputDir.mkdirRecurse();
     }
 
     // Verify directory
     if (!outputDir.isDir)
     {
-        // the so-called directory is actually something else (probably an existing file)
         stderr.writeln("\033[1;31mError: The specified output directory is actually something else\033[39;49m");
         exit(1);
     }
