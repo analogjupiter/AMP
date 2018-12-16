@@ -33,89 +33,41 @@
     obligated to do so.  If you do not wish to do so, delete this
     exception statement from your version.
  +/
-module amp.output.html;
+module amp.settings;
 
-import std.array : appender;
-import std.path : buildPath;
-import std.stdio : File;
-import std.string;
-import amp.apiwrappers;
-import amp.parser;
-import amp.output.generic;
-import amp.output.mustachecontextbuilder;
-import mustache;
+import std.file : readText, copy, dirEntries, DirEntry, exists, isDir, mkdirRecurse, SpanMode, thisExePath;
+import std.stdio;
+import std.typecons;
 
-enum TemplateFileName = "amp";
-enum TemplateFileExt = Mustache.Option().ext;
-enum TemplateFileNameFull = TemplateFileName ~ '.' ~ TemplateFileExt;
-
-private
+class Settings
 {
-    alias Mustache = MustacheEngine!string;
-}
+    protected static Settings _instance;
 
-/++
-    Mustache template based HTML output
- +/
-class HTMLAPIDocsOutput : APIDocsOutput
-{
-final @safe:
+    public string projectName ="";// TODO
 
-    private
+    public string templateDirPath;
+    public string blueprintPath;
+
+    public string outputDirPath;        // directory, where everything is outputted
+    public string outputHtmlPath;       // path to the project.html file
+    public File output;         // either stdout or file of outputHtmlPath
+
+    public bool useStdout;      // results get printed to stdout instead of file
+    public bool useStderr;
+    public bool forceOverride;
+
+    public File drafterLog;
+    public Tuple!(string, ulong)[] blueprintFileDetails;
+
+    public static Settings instance()
     {
-        Mustache _mustache;
+        if(_instance is null)
+            _instance = new Settings();
+
+        return _instance;
     }
 
-    public
+    protected this()
     {
-        @property
-        {
-            /++
-                Mustache instance used by the HTML outputter
-             +/
-            Mustache mustache()
-            {
-                return this._mustache;
-            }
-        }
-
-        @property
-        {
-            /++
-                Template directory to use
-             +/
-            string templatePath()
-            {
-                return this._mustache.path;
-            }
-
-            /++ ditto +/
-            void templatePath(string value)
-            {
-                this._mustache.ext = TemplateFileExt;
-                this._mustache.path = value;
-            }
-        }
-    }
-
-    /++
-        ctor
-     +/
-    public this(string templatePath)
-    {
-        this._mustache.level = Mustache.CacheLevel.no;
-        this._mustache.path = templatePath;
-    }
-
-    public @system
-    {
-        /++
-            Converts the API def to HTML
-         +/
-        void write(ParserResult pr, File target)
-        {
-            auto contextBuilder = new MustacheContextBuilder();
-            target.rawWrite(mustache.render(TemplateFileName, contextBuilder.getContext(pr.api)));
-        }
     }
 }

@@ -1,1 +1,1 @@
-﻿AMP - API Markup Processor
+﻿AMP - API Markdown Processor

@@ -1,4 +1,4 @@
-AMP - API Markup Processor
+AMP - API Markdown Processor
   Copyright (c) 2018  R3Vid
   Copyright (c) 2018  0xEAB
 
@@ -25,4 +25,3 @@ in this distribution, in the file COPYING.txt.
   this exception to your version of the tool, but you are not
   obligated to do so.  If you do not wish to do so, delete this
   exception statement from your version.
-

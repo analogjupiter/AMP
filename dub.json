@@ -1,6 +1,6 @@
 {
     "name": "amp",
-    "description": "API Markup Processor",
+    "description": "API Markdown Processor",
 
     "copyright": "Copyright © 2018  0xEAB",
     "license": "AGPL-3.0 or later",
