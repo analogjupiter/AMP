@@ -2,8 +2,8 @@
     "name": "amp",
     "description": "API Markdown Processor",
 
-    "copyright": "Copyright © 2018  0xEAB",
-    "license": "AGPL-3.0 or later",
+    "copyright": "Copyright © 2018  R3Vid",
+    "license": "MPL-2.0",
 
     "authors": [
         "Manuel Kirchner (R3Vid)",
