@@ -31,3 +31,5 @@ bin/
 .vscode/
 dub.userprefs
 
+# DUB hash
+/source/amp/str/version.txt

@@ -107,7 +107,7 @@ void parseAndRenderBlueprint(Settings settings)
  +/
 void printVersionInfo()
 {
-    writeln("AMP v", import("version.txt"));
+    writeln("AMP ", import("version.txt"));
 }
 
 void printHelp(string appPath, GetoptResult rgetopt)

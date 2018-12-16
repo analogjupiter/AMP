@@ -16,6 +16,10 @@
 
     "targetPath": "bin",
 
+    "preGenerateCommands" : [
+        "rdmd $PACKAGE_DIR/dubhash.d"
+    ],
+
     "dependencies": {
         "mustache-d": "~>0.1.3"
     }
